@@ -175,7 +175,7 @@ int draw_squares(void)
     return 0;
 }
 
-int update_input(Color current_colour)
+int update_input(struct game_state_t *gs)
 {
     int              rc = 0;
     struct square_t *sq = get_square(squares, GetMouseX(), GetMouseY());
@@ -197,10 +197,8 @@ int update_input(Color current_colour)
         if (((sq->piece.role & PIECE_MASK) >= 7))
             return 0; // continue;
 
-        if ((PIECE_COLOUR(sq->piece.role) == 0x01 &&
-             memcmp(&current_colour, &WHITE, sizeof(Color)) == 0) ||
-            (PIECE_COLOUR(sq->piece.role) == 0x02 &&
-             memcmp(&current_colour, &BLACK, sizeof(Color)) == 0))
+        if ((PIECE_COLOUR(sq->piece.role) == 0x01 && gs->player == 0x02) ||
+            (PIECE_COLOUR(sq->piece.role) == 0x02 && gs->player == 0x01))
             return 0; // continue;
 
         fprintf(stderr, "updating_board(): backing up floating_piece\n");
@@ -210,28 +208,41 @@ int update_input(Color current_colour)
             destroy_piece(NULL, &sq->piece);
     } else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
         if (original_sqr) {
-            if (move_piece(original_sqr, sq) != 0)
+            if (move_piece(squares, gs, original_sqr, sq) != 0)
                 fprintf(stderr, "move_piece(): reverted to original square\n");
         }
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                struct square_t *sq = &squares[i * 8 + j];
-                sq->row             = i;
-                sq->col             = j;
-                if ((i + j) % 2 == 1) {
-                    sq->colour = BROWN;
-                } else {
-                    sq->colour = BEIGE;
-                }
+    } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+        floating_piece = NULL;
+        original_sqr   = NULL;
+    }
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            struct square_t *sq = &squares[i * 8 + j];
+            sq->row             = i;
+            sq->col             = j;
+            if ((i + j) % 2 == 1) {
+                sq->colour = BROWN;
+            } else {
+                sq->colour = BEIGE;
             }
+        }
+    }
+
+    if (gs->check) {
+        uint64_t cc = check_check(squares, gs->check);
+        for (int i = 0; i < 64; i++) {
+            if ((cc >> i) & 1)
+                squares[i].colour = RED;
         }
     }
 
     if (original_sqr) {
         uint64_t mask = move_mask(squares, original_sqr->piece.role);
         for (int i = 0; i < 64; ++i) {
-            if (((mask >> i) & 1) == 1)
-                squares[i].colour = GREEN;
+            if (((mask >> i) & 1) == 1) {
+                squares[i].colour   = GREEN;
+                squares[i].colour.a = 50;
+            }
         }
     }
     draw_squares();

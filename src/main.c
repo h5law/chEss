@@ -34,7 +34,7 @@
 #include <raylib.h>
 
 #include "dsa.h"
-#include "players.h"
+#include "board.h"
 
 mem_ctx_t pieces_ctx = {0};
 // mem_ctx_t moves_ctx            = {0};

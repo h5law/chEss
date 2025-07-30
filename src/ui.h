@@ -38,7 +38,7 @@ int  init_squares(mem_ctx_t *board_ctx, mem_ctx_t *pieces_ctx);
 void load_assets(void);
 
 int update_board(void);
-int update_input(Color current_colour);
+int update_input(struct game_state_t *gs);
 int draw(void);
 int draw_squares(void);
 int draw_piece(piece_t p, float x, float y);

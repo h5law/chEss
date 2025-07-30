@@ -98,10 +98,53 @@ struct square_t {
     Color          colour;
 };
 
-uint64_t         checksum_board(struct square_t *board);
-struct square_t *get_square(struct square_t *board, int x, int y);
+struct game_state_t {
+    unsigned int player : 2;
+    unsigned int winner : 2;
+    unsigned int check  : 2;
 
-int move_piece(struct square_t *orig, struct square_t *nsq);
+    struct square_t *board;
+
+    uint32_t turn_count;
+    uint32_t player1_count;
+    uint32_t player2_count;
+    uint32_t inactive_run;
+
+    uint32_t round_start;
+    uint32_t player1_remaining;
+    uint32_t player2_remaining;
+    char     log_messages[256];
+};
+
+struct player_state_t {
+    unsigned int active : 2;
+    unsigned int pieces : 2;
+
+    uint8_t  score;
+    uint16_t move_count;
+    uint16_t inactivity_count;
+
+    uint32_t start_time;
+    uint32_t remaining_time;
+
+    char user_banner[32];
+};
+
+int pair_players(struct player_state_t *players, size_t player_count,
+                 struct player_state_t *p1, struct player_state_t *p2);
+int init_game(struct game_state_t *gs, struct player_state_t *p1,
+              struct player_state_t *p2);
+int play_game(struct game_state_t *gs, struct player_state_t *p1,
+              struct player_state_t *p2);
+int end_game(struct game_state_t *gs, struct player_state_t *p1,
+             struct player_state_t *p2, int outcome);
+
+uint64_t checksum_board(struct square_t *board);
+uint64_t check_check(struct square_t *board, uint8_t colour_id);
+
+struct square_t *get_square(struct square_t *board, int x, int y);
+int              move_piece(struct square_t *board, struct game_state_t *gs,
+                            struct square_t *orig, struct square_t *nsq);
 
 int destroy_piece(mem_ctx_t *ctx, struct piece_s *p);
 int destroy_board(mem_ctx_t *ctx, struct square_t *board);

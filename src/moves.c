@@ -29,7 +29,6 @@
  */
 
 #include <stdint.h>
-#include <stdio.h>
 
 #include "board.h"
 #include "moves.h"
@@ -346,7 +345,9 @@ uint64_t queen_move_map(struct square_t *board, uint8_t row, uint8_t col)
     r = row + 1;
     c = col;
     while (r >= 0 && c >= 0) {
-        idx  = r * 8 + c;
+        idx = r * 8 + c;
+        if (idx > 63)
+            break;
         map |= (1ULL << idx);
         if (PIECE_ROLE(board[idx].piece.role) != 7) {
             if ((piece_colour == BLACK_ID &&

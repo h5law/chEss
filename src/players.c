@@ -1,4 +1,4 @@
-/* players.h
+/* players.h;
  * Copyright 2025 h5law <dev@h5law.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,6 @@
 
 #include "dsa.h"
 #include "board.h"
-#include "players.h"
 #include "ui.h"
 
 extern mem_ctx_t board_ctx;
@@ -48,7 +47,6 @@ extern mem_ctx_t pieces_ctx;
 
 static const int screen_height = 640;
 static const int screen_width  = 560;
-static int       moved         = 0;
 
 extern struct square_t *squares;
 extern struct piece_s  *floating_piece;
@@ -87,6 +85,9 @@ int init_game(struct game_state_t *gs, struct player_state_t *p1,
     gs->player           = 0;
     gs->winner           = 0;
 
+    gs->check            = 0;
+    gs->board            = squares;
+
     gs->turn_count       = 0;
     gs->player1_count    = 0;
     gs->player2_count    = 0;
@@ -94,10 +95,6 @@ int init_game(struct game_state_t *gs, struct player_state_t *p1,
 
     p1->remaining_time   = 10 * 60;
     p2->remaining_time   = 10 * 60;
-
-    gs->player1_score    = 0;
-    gs->player2_score    = 0;
-
     int a, b = 0;
     a = (rand() % 2) + 1; // 1 - 2
     b = 2 - a + 1;
@@ -106,10 +103,13 @@ int init_game(struct game_state_t *gs, struct player_state_t *p1,
 
     p1->pieces = (a == 2 ? WHITE_ID /* W */ : BLACK_ID /* B */);
     p2->pieces = (b == 2 ? WHITE_ID /* W */ : BLACK_ID /* B */);
-    if (p1->pieces == WHITE_ID)
+    if (p1->pieces == WHITE_ID) {
         p1->active = 1;
-    else
+        gs->player = p1->pieces;
+    } else {
         p2->active = 1;
+        gs->player = p2->pieces;
+    }
 
     return 0;
 }
@@ -139,31 +139,27 @@ int play_game(struct game_state_t *gs, struct player_state_t *p1,
 
         draw_squares();
 
-        char  p1a = ' ';
-        char  p2a = ' ';
-        int   current_pieces;
-        Color current_colour;
+        char p1a = ' ';
+        char p2a = ' ';
         if (p1->active) {
             if (p1->start_time == 0) {
                 p1->start_time = time(0);
                 p2->start_time = 0;
             }
-            current_pieces = p1->pieces;
-            current_colour = p1c;
-            p2a            = 'x';
-            p1a            = ' ';
+            gs->player = p1->pieces;
+            p2a        = 'x';
+            p1a        = ' ';
         } else if (p2->active) {
             if (p2->start_time == 0) {
                 p2->start_time = time(0);
                 p1->start_time = 0;
             }
-            current_pieces = p2->pieces;
-            current_colour = p2c;
-            p2a            = ' ';
-            p1a            = 'x';
+            gs->player = p2->pieces;
+            p2a        = ' ';
+            p1a        = 'x';
         }
 
-        rc = update_input(current_colour);
+        rc = update_input(gs);
         if (floating_piece && floating_piece->role)
             draw_piece_middle(floating_piece->role, GetMouseX(), GetMouseY());
         nstate = checksum_board(squares);

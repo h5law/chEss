@@ -60,37 +60,248 @@ uint64_t checksum_board(struct square_t *board)
     return tracker;
 }
 
-int move_piece(struct square_t *orig, struct square_t *nsq)
+uint64_t check_check(struct square_t *board, uint8_t colour_id)
 {
-    int rc = 0;
-    fprintf(stderr, "move_piece(): moving piece at %dx%d\n", orig->row,
-            orig->col);
-    if (((nsq->piece.role & PIECE_MASK) < 7 &&
-         PIECE_COLOUR(orig->piece.role) == PIECE_COLOUR(nsq->piece.role)) &&
-        (SQUARE_AVAILABLE(nsq, move_mask(squares, orig->piece.role)))) {
-        fprintf(stderr, "move_piece(): moving back to initial square\n");
-        floating_piece      = &orig->piece;
-        original_sqr->piece = *floating_piece;
-        rc                  = 1;
-    } else if (SQUARE_AVAILABLE(nsq, move_mask(squares, orig->piece.role))) {
-        fprintf(stderr, "move_piece(): moving the held piece currently\n");
-        if (floating_piece && floating_piece->state > MOVED) {
-            destroy_piece(NULL, &nsq->piece);
-        } else {
-            nsq->piece      = orig->piece;
-            nsq->piece.role = (nsq->row << 12) | (nsq->col << 8) |
-                              (0x00FF & nsq->piece.role);
-            if (floating_piece && floating_piece->state == UNMOVED) {
-                floating_piece->state = MOVED;
+    uint64_t king       = 0;
+    uint64_t king_idx   = 0;
+    uint64_t mask       = 0;
+    uint64_t rev_mask   = 0;
+    uint64_t check_mask = 0;
+
+    for (int i = 0; i < 64; ++i) {
+        if (colour_id == WHITE_ID) {
+            if ((0x00FF & board[i].piece.role) == (WHITE_MASK | KING_ID)) {
+                king     = (1 << i);
+                king_idx = i;
+                break;
+            }
+        } else if (colour_id == BLACK_ID) {
+            if ((0x00FF & board[i].piece.role) == (BLACK_MASK | KING_ID)) {
+                king     = (1 << i);
+                king_idx = i;
+                break;
             }
         }
-        rc = 0;
-        fprintf(stderr, "move_piece(): removing piece from previous spot\n");
-        floating_piece = NULL;
-        destroy_piece(NULL, &orig->piece);
     }
+
+    mask = queen_move_map(board, PIECE_ROW(board[king_idx].piece.role),
+                          PIECE_COL(board[king_idx].piece.role));
+    for (int i = 0; i < 64; ++i) {
+        if (PIECE_COLOUR(board[i].piece.role) == colour_id)
+            continue;
+        switch (PIECE_ROLE(board[i].piece.role)) {
+        case BISHOP_ID:
+            rev_mask = bishop_move_map(board, PIECE_ROW(board[i].piece.role),
+                                       PIECE_COL(board[i].piece.role));
+            if ((rev_mask & king) > 0)
+                check_mask |= (rev_mask & king) | (1 << i);
+        }
+    }
+
+    return check_mask;
+}
+
+int resolves_check(struct square_t *board, struct square_t *orig,
+                   struct square_t *nsq, uint8_t colour_id)
+{
+    struct piece_s orig_piece = orig->piece;
+    struct piece_s nsq_piece  = nsq->piece;
+
+    nsq->piece                = orig->piece;
+    nsq->piece.role =
+            (nsq->row << 12) | (nsq->col << 8) | (0x00FF & nsq->piece.role);
+    destroy_piece(NULL, &orig->piece);
+
+    uint64_t check_mask = check_check(board, colour_id);
+
+    orig->piece         = orig_piece;
+    nsq->piece          = nsq_piece;
+
+    return check_mask == 0;
+}
+
+int check_discovered_check(struct square_t *board, struct game_state_t *gs,
+                           struct square_t *orig, struct square_t *nsq)
+{
+    uint64_t king       = 0;
+    uint64_t king_idx   = 0;
+    uint64_t mask       = 0;
+    uint64_t rev_mask   = 0;
+    uint64_t check_mask = 0;
+    uint8_t  opp_colour = 2 - gs->player + 1;
+
+    for (int i = 0; i < 64; ++i) {
+        if (opp_colour == WHITE_ID) {
+            if ((0x00FF & board[i].piece.role) == (WHITE_MASK | KING_ID)) {
+                king     = (1ULL << i);
+                king_idx = i;
+                break;
+            }
+        } else if (opp_colour == BLACK_ID) {
+            if ((0x00FF & board[i].piece.role) == (BLACK_MASK | KING_ID)) {
+                king     = (1ULL << i);
+                king_idx = i;
+                break;
+            }
+        }
+    }
+
+    struct piece_s orig_piece = orig->piece;
+    struct piece_s nsq_piece  = nsq->piece;
+    nsq->piece                = orig->piece;
+    nsq->piece.role =
+            (nsq->row << 12) | (nsq->col << 8) | (0x00FF & nsq->piece.role);
+    orig->piece.role = (orig->piece.role | PIECE_MASK) & 0x0007;
+
+    mask = queen_move_map(board, PIECE_ROW(board[king_idx].piece.role),
+                          PIECE_COL(board[king_idx].piece.role));
+
+    for (int i = 0; i < 64; ++i) {
+        if (i == (nsq->row * 8 + nsq->col) ||
+            PIECE_COLOUR(board[i].piece.role) != gs->player)
+            continue;
+        switch (PIECE_ROLE(board[i].piece.role)) {
+        case PAWN_ID:
+            rev_mask = pawn_move_map(board, PIECE_ROW(board[i].piece.role),
+                                     PIECE_COL(board[i].piece.role));
+            break;
+        case KNIGHT_ID:
+            rev_mask = knight_move_map(PIECE_ROW(board[i].piece.role),
+                                       PIECE_COL(board[i].piece.role));
+            break;
+        case BISHOP_ID:
+            rev_mask = bishop_move_map(board, PIECE_ROW(board[i].piece.role),
+                                       PIECE_COL(board[i].piece.role));
+            break;
+        case ROOK_ID:
+            rev_mask = rook_move_map(board, PIECE_ROW(board[i].piece.role),
+                                     PIECE_COL(board[i].piece.role));
+            break;
+        case QUEEN_ID:
+            rev_mask = queen_move_map(board, PIECE_ROW(board[i].piece.role),
+                                      PIECE_COL(board[i].piece.role));
+            break;
+        case KING_ID:
+            rev_mask = king_move_map(board, PIECE_ROW(board[i].piece.role),
+                                     PIECE_COL(board[i].piece.role));
+            break;
+        }
+        rev_mask &= mask;
+        if ((rev_mask & king) > 0) {
+            nsq->piece      = nsq_piece;
+            nsq->piece.role = (PIECE_ROW(nsq_piece.role) << 12) |
+                              (PIECE_COL(nsq_piece.role) << 8) |
+                              (0x00FF & nsq_piece.role);
+            orig->piece      = orig_piece;
+            orig->piece.role = (PIECE_ROW(orig_piece.role) << 12) |
+                               (PIECE_COL(orig_piece.role) << 8) |
+                               (0x00FF & orig_piece.role);
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int move_piece(struct square_t *board, struct game_state_t *gs,
+               struct square_t *orig, struct square_t *nsq)
+{
+    fprintf(stderr,
+            "move_piece(): attempting to move piece at %dx%d to %dx%d\n",
+            orig->row, orig->col, nsq->row, nsq->col);
+
+    int rc      = 0;
+
+    uint64_t cc = check_check(squares, gs->player);
+    gs->check   = cc ? gs->player : 0;
+
+    if (nsq == orig ||
+        (((nsq->piece.role & PIECE_MASK) < 7 &&
+          PIECE_COLOUR(orig->piece.role) == PIECE_COLOUR(nsq->piece.role)))) {
+        fprintf(stderr, "move_piece(): invalid move (same square or same color "
+                        "piece)\n");
+        floating_piece      = &orig->piece;
+        original_sqr->piece = *floating_piece;
+        floating_piece      = NULL;
+        destroy_piece(NULL, floating_piece);
+        return 1;
+    }
+
+    if (!SQUARE_AVAILABLE(nsq, move_mask(squares, orig->piece.role))) {
+        fprintf(stderr, "move_piece(): move not in valid move mask\n");
+        floating_piece      = &orig->piece;
+        original_sqr->piece = *floating_piece;
+        floating_piece      = NULL;
+        destroy_piece(NULL, floating_piece);
+        return 1;
+    }
+
+    if (gs->check == gs->player) {
+        if (!resolves_check(squares, orig, nsq, gs->player)) {
+            fprintf(stderr, "move_piece(): move does not resolve check\n");
+            floating_piece      = &orig->piece;
+            original_sqr->piece = *floating_piece;
+            floating_piece      = NULL;
+            destroy_piece(NULL, floating_piece);
+            return 1;
+        }
+        gs->check = 0;
+    }
+
+    struct piece_s orig_piece = orig->piece;
+    struct piece_s nsq_piece  = nsq->piece;
+    nsq->piece                = orig->piece;
+    nsq->piece.role =
+            (nsq->row << 12) | (nsq->col << 8) | (0x00FF & nsq->piece.role);
+    orig->piece.role = (orig->piece.role | PIECE_MASK) & 0x0007;
+    floating_piece   = &orig->piece;
+
+    if (check_check(squares, PIECE_COLOUR(orig->piece.role)) > 0) {
+        fprintf(stderr, "move_piece(): move puts own king in check\n");
+        floating_piece      = &orig->piece;
+        original_sqr->piece = *floating_piece;
+        floating_piece      = NULL;
+        destroy_piece(NULL, floating_piece);
+        return 1;
+    }
+
+    if (check_discovered_check(squares, gs, orig, nsq)) {
+        fprintf(stderr, "move_piece(): move causes discovered check\n");
+        gs->check           = 2 - gs->player + 1;
+        floating_piece      = &orig->piece;
+        original_sqr->piece = *floating_piece;
+        floating_piece      = NULL;
+        destroy_piece(NULL, floating_piece);
+        return 1;
+    }
+
+    orig->piece = orig_piece;
+    nsq->piece  = nsq_piece;
+
+    fprintf(stderr, "move_piece(): moving the held piece\n");
+    if (floating_piece && floating_piece->state > MOVED) {
+        destroy_piece(NULL, &nsq->piece);
+    } else {
+        nsq->piece = orig->piece;
+        nsq->piece.role =
+                (nsq->row << 12) | (nsq->col << 8) | (0x00FF & nsq->piece.role);
+        if (floating_piece && floating_piece->state == UNMOVED) {
+            floating_piece->state = MOVED;
+        }
+        if (gs->check)
+            gs->check = 0;
+    }
+    fprintf(stderr, "move_piece(): removing piece from previous spot\n");
+    destroy_piece(NULL, &orig->piece);
     floating_piece = NULL;
-    destroy_piece(NULL, floating_piece);
+
+    gs->player     = (gs->player == WHITE_ID) ? BLACK_ID : WHITE_ID;
+    cc             = check_check(squares, gs->player);
+    if (cc != 0) {
+        gs->check = gs->player;
+        fprintf(stderr, "move_piece(): opponent king in check\n");
+    }
+
     return rc;
 }
 
