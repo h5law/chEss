@@ -84,21 +84,40 @@ uint64_t check_check(struct square_t *board, uint8_t colour_id)
         }
     }
 
-    mask = queen_move_map(board, PIECE_ROW(board[king_idx].piece.role),
-                          PIECE_COL(board[king_idx].piece.role));
     for (int i = 0; i < 64; ++i) {
         if (PIECE_COLOUR(board[i].piece.role) == colour_id)
             continue;
         switch (PIECE_ROLE(board[i].piece.role)) {
+        // case PAWN_ID:
+        //     rev_mask = pawn_move_map(board, PIECE_ROW(board[i].piece.role),
+        //                              PIECE_COL(board[i].piece.role));
+        //     break;
+        case KNIGHT_ID:
+            rev_mask = knight_move_map(PIECE_ROW(board[i].piece.role),
+                                       PIECE_COL(board[i].piece.role));
+            break;
         case BISHOP_ID:
             rev_mask = bishop_move_map(board, PIECE_ROW(board[i].piece.role),
                                        PIECE_COL(board[i].piece.role));
-            if ((rev_mask & king) > 0)
-                check_mask |= (rev_mask & king) | (1 << i);
+            break;
+        case ROOK_ID:
+            rev_mask = rook_move_map(board, PIECE_ROW(board[i].piece.role),
+                                     PIECE_COL(board[i].piece.role));
+            break;
+        case QUEEN_ID:
+            rev_mask = queen_move_map(board, PIECE_ROW(board[i].piece.role),
+                                      PIECE_COL(board[i].piece.role));
+            break;
+        case KING_ID:
+            rev_mask = king_move_map(board, PIECE_ROW(board[i].piece.role),
+                                     PIECE_COL(board[i].piece.role));
+            break;
         }
+        if ((rev_mask & king) > 0)
+            return (rev_mask & king) | (1 << i);
     }
 
-    return check_mask;
+    return 0;
 }
 
 int resolves_check(struct square_t *board, struct square_t *orig,
@@ -153,9 +172,6 @@ int check_discovered_check(struct square_t *board, struct game_state_t *gs,
             (nsq->row << 12) | (nsq->col << 8) | (0x00FF & nsq->piece.role);
     orig->piece.role = (orig->piece.role | PIECE_MASK) & 0x0007;
 
-    mask = queen_move_map(board, PIECE_ROW(board[king_idx].piece.role),
-                          PIECE_COL(board[king_idx].piece.role));
-
     for (int i = 0; i < 64; ++i) {
         if (i == (nsq->row * 8 + nsq->col) ||
             PIECE_COLOUR(board[i].piece.role) != gs->player)
@@ -186,7 +202,6 @@ int check_discovered_check(struct square_t *board, struct game_state_t *gs,
                                      PIECE_COL(board[i].piece.role));
             break;
         }
-        rev_mask &= mask;
         if ((rev_mask & king) > 0) {
             nsq->piece      = nsq_piece;
             nsq->piece.role = (PIECE_ROW(nsq_piece.role) << 12) |

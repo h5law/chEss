@@ -104,6 +104,7 @@ struct game_state_t {
     unsigned int check  : 2;
 
     struct square_t *board;
+    int              en_passant_target;
 
     uint32_t turn_count;
     uint32_t player1_count;

@@ -101,7 +101,7 @@ int init_squares(mem_ctx_t *board_ctx, mem_ctx_t *pieces_ctx)
         }
     }
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; ++i) {
         squares[8 + i].piece.role = (1 << 12) | (i << 8) | PAWN_ID | BLACK_MASK;
         squares[(6 * 8) + i].piece.role =
                 (6 << 12) | (i << 8) | PAWN_ID | WHITE_MASK;
@@ -231,7 +231,7 @@ int update_input(struct game_state_t *gs)
     if (gs->check) {
         uint64_t cc = check_check(squares, gs->check);
         for (int i = 0; i < 64; i++) {
-            if ((cc >> i) & 1)
+            if (((cc >> i) & 1) == 1)
                 squares[i].colour = RED;
         }
     }

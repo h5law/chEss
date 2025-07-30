@@ -29,6 +29,7 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 
 #include "board.h"
 #include "moves.h"
@@ -58,32 +59,59 @@ uint64_t pawn_move_map(struct square_t *board, uint8_t row, uint8_t col)
 {
     uint64_t map = 0;
 
-    if (PIECE_COLOUR(board[(row * 8) + col].piece.role) == WHITE_ID) {
-        if (PIECE_COLOUR(board[((row - 1) * 8) + (col - 1)].piece.role) ==
-            BLACK_ID)
-            map |= (( uint64_t )1 << (col - 1)) << ((row - 1) * 8);
-        if (PIECE_COLOUR(board[((row - 1) * 8) + (col + 1)].piece.role) ==
-            BLACK_ID)
-            map |= (( uint64_t )1 << (col + 1)) << ((row - 1) * 8);
-        if (row == 6) { // TODO: en-passent
-            if (PIECE_COLOUR(board[((row - 2) * 8) + (col)].piece.role) == 0)
-                map |= (( uint64_t )1 << col) << ((row - 2) * 8);
-        }
-        if (PIECE_COLOUR(board[((row - 1) * 8) + (col)].piece.role) == 0)
+    if (row > 7 || col > 7) {
+        fprintf(stderr, "pawn_move_map: invalid position (%d, %d)\n", row, col);
+        return 0;
+    }
+
+    uint8_t colour = (PIECE_COLOUR(board[(row * 8) + col].piece.role));
+
+    if (colour == WHITE_ID) {
+        if (row > 0 &&
+            PIECE_COLOUR(board[(row - 1) * 8 + col].piece.role) == 0) {
             map |= (( uint64_t )1 << col) << ((row - 1) * 8);
-    } else if (PIECE_COLOUR(board[(row * 8) + col].piece.role) == BLACK_ID) {
-        if (PIECE_COLOUR(board[((row + 1) * 8) + (col - 1)].piece.role) ==
-            WHITE_ID)
-            map |= (( uint64_t )1 << (col - 1)) << ((row + 1) * 8);
-        if (PIECE_COLOUR(board[((row + 1) * 8) + (col + 1)].piece.role) ==
-            WHITE_ID)
-            map |= (( uint64_t )1 << (col + 1)) << ((row + 1) * 8);
-        if (row == 1) { // TODO: en-passent
-            if (PIECE_COLOUR(board[((row + 2) * 8) + (col)].piece.role) == 0)
-                map |= (( uint64_t )1 << col) << ((row + 2) * 8);
         }
-        if (PIECE_COLOUR(board[((row + 1) * 8) + (col)].piece.role) == 0)
+        if (row == 6 &&
+            PIECE_COLOUR(board[(row - 1) * 8 + col].piece.role) == 0 &&
+            PIECE_COLOUR(board[(row - 2) * 8 + col].piece.role) == 0) {
+            map |= (( uint64_t )1 << col) << ((row - 2) * 8);
+        }
+        if (row > 0 && col > 0) {
+            if (PIECE_COLOUR(board[(row - 1) * 8 + (col - 1)].piece.role) ==
+                2 - colour + 1) {
+                map |= (( uint64_t )1 << (col - 1)) << ((row - 1) * 8);
+            }
+        }
+        if (row > 0 && col < 7) {
+            if (PIECE_COLOUR(board[(row - 1) * 8 + (col + 1)].piece.role) ==
+                2 - colour + 1) {
+                map |= (( uint64_t )1 << (col + 1)) << ((row - 1) * 8);
+            }
+        }
+        // TODO: En-Passant
+    } else if (colour == BLACK_ID) {
+        if (row < 7 &&
+            PIECE_COLOUR(board[(row + 1) * 8 + col].piece.role) == 0) {
             map |= (( uint64_t )1 << col) << ((row + 1) * 8);
+        }
+        if (row == 1 &&
+            PIECE_COLOUR(board[(row + 1) * 8 + col].piece.role) == 0 &&
+            PIECE_COLOUR(board[(row + 2) * 8 + col].piece.role) == 0) {
+            map |= (( uint64_t )1 << col) << ((row + 2) * 8);
+        }
+        if (row < 7 && col > 0) {
+            if (PIECE_COLOUR(board[(row + 1) * 8 + (col - 1)].piece.role) ==
+                2 - colour + 1) {
+                map |= (( uint64_t )1 << (col - 1)) << ((row + 1) * 8);
+            }
+        }
+        if (row < 7 && col < 7) {
+            if (PIECE_COLOUR(board[(row + 1) * 8 + (col + 1)].piece.role) ==
+                2 - colour + 1) {
+                map |= (( uint64_t )1 << (col + 1)) << ((row + 1) * 8);
+            }
+        }
+        // TODO: En-Passant
     }
 
     return map;
@@ -179,7 +207,9 @@ uint64_t rook_move_map(struct square_t *board, uint8_t row, uint8_t col)
     r = row - 1;
     c = col;
     while (r >= 0 && c <= 7) {
-        idx  = r * 8 + c;
+        idx = r * 8 + c;
+        if (idx > 63)
+            break;
         map |= (1ULL << idx);
         if (PIECE_ROLE(board[idx].piece.role) != 7) {
             if ((piece_colour == BLACK_ID &&
@@ -196,7 +226,9 @@ uint64_t rook_move_map(struct square_t *board, uint8_t row, uint8_t col)
     r = row + 1;
     c = col;
     while (r >= 0 && c >= 0) {
-        idx  = r * 8 + c;
+        idx = r * 8 + c;
+        if (idx > 63)
+            break;
         map |= (1ULL << idx);
         if (PIECE_ROLE(board[idx].piece.role) != 7) {
             if ((piece_colour == BLACK_ID &&
@@ -274,7 +306,9 @@ uint64_t queen_move_map(struct square_t *board, uint8_t row, uint8_t col)
     r = row - 1;
     c = col - 1;
     while (r >= 0 && c >= 0) {
-        idx  = r * 8 + c;
+        idx = r * 8 + c;
+        if (idx > 63)
+            break;
         map |= (1ULL << idx);
         if (PIECE_ROLE(board[idx].piece.role) != 7) {
             if ((piece_colour == BLACK_ID &&
@@ -310,7 +344,9 @@ uint64_t queen_move_map(struct square_t *board, uint8_t row, uint8_t col)
     r = row + 1;
     c = col - 1;
     while (r <= 7 && c >= 0) {
-        idx  = r * 8 + c;
+        idx = r * 8 + c;
+        if (idx > 63)
+            break;
         map |= (1ULL << idx);
         if (PIECE_ROLE(board[idx].piece.role) != 7) {
             if ((piece_colour == BLACK_ID &&
@@ -328,7 +364,9 @@ uint64_t queen_move_map(struct square_t *board, uint8_t row, uint8_t col)
     r = row - 1;
     c = col;
     while (r >= 0 && c <= 7) {
-        idx  = r * 8 + c;
+        idx = r * 8 + c;
+        if (idx > 63)
+            break;
         map |= (1ULL << idx);
         if (PIECE_ROLE(board[idx].piece.role) != 7) {
             if ((piece_colour == BLACK_ID &&
@@ -381,7 +419,9 @@ uint64_t queen_move_map(struct square_t *board, uint8_t row, uint8_t col)
     r = row;
     c = col - 1;
     while (r <= 7 && c >= 0) {
-        idx  = r * 8 + c;
+        idx = r * 8 + c;
+        if (idx > 63)
+            break;
         map |= (1ULL << idx);
         if (PIECE_ROLE(board[idx].piece.role) != 7) {
             if ((piece_colour == BLACK_ID &&
@@ -402,136 +442,24 @@ uint64_t king_move_map(struct square_t *board, uint8_t row, uint8_t col)
 {
     uint64_t map          = 0;
     uint8_t  piece_colour = PIECE_COLOUR(board[(row * 8) + col].piece.role);
-    int8_t   r, c, idx;
 
-    r = row - 1;
-    c = col + 1;
-    if (r >= 0 && c <= 7) {
-        idx = r * 8 + c;
-        if (PIECE_ROLE(board[idx].piece.role) != 7) {
-            if ((piece_colour == BLACK_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == WHITE_ID) ||
-                (piece_colour == WHITE_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == BLACK_ID)) {
-                map |= (1ULL << idx);
-            }
-        } else {
-            map |= (1ULL << idx);
-        }
+    uint64_t top          = (( uint64_t )7 << (col - 1)) << ((row - 1) * 8);
+    uint64_t bottom       = (( uint64_t )7 >> (col - 1)) << (row + 1 * 8);
+    if (col < 1) {
+        top    = (( uint64_t )3 << (col)) << ((row - 1) * 8);
+        bottom = (( uint64_t )3 << (col)) << ((row + 1) * 8);
     }
+    if (row == 0)
+        top = 0;
+    if (row == 7)
+        bottom = 0;
+    uint64_t lr = (( uint64_t )5 << (col - 1)) << (row * 8);
+    if (col == 0)
+        lr = (( uint64_t )0b00000010) << (row * 8);
+    if (col == 7)
+        lr = (( uint64_t )0b01000000) << (row * 8);
 
-    r = row - 1;
-    c = col - 1;
-    if (r >= 0 && c >= 0) {
-        idx  = r * 8 + c;
-        map |= (1ULL << idx);
-        if (PIECE_ROLE(board[idx].piece.role) != 7) {
-            if ((piece_colour == BLACK_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == WHITE_ID) ||
-                (piece_colour == WHITE_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == BLACK_ID)) {
-                map |= (1ULL << idx);
-            }
-        } else {
-            map |= (1ULL << idx);
-        }
-    }
-
-    r = row + 1;
-    c = col + 1;
-    if (r <= 7 && c <= 7) {
-        idx = r * 8 + c;
-        if (PIECE_ROLE(board[idx].piece.role) != 7) {
-            if ((piece_colour == BLACK_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == WHITE_ID) ||
-                (piece_colour == WHITE_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == BLACK_ID)) {
-                map |= (1ULL << idx);
-            }
-        } else {
-            map |= (1ULL << idx);
-        }
-    }
-
-    r = row + 1;
-    c = col - 1;
-    if (r <= 7 && c >= 0) {
-        idx = r * 8 + c;
-        if (PIECE_ROLE(board[idx].piece.role) != 7) {
-            if ((piece_colour == BLACK_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == WHITE_ID) ||
-                (piece_colour == WHITE_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == BLACK_ID)) {
-                map |= (1ULL << idx);
-            }
-        } else {
-            map |= (1ULL << idx);
-        }
-    }
-
-    r = row - 1;
-    c = col;
-    if (r >= 0 && c <= 7) {
-        idx = r * 8 + c;
-        if (PIECE_ROLE(board[idx].piece.role) != 7) {
-            if ((piece_colour == BLACK_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == WHITE_ID) ||
-                (piece_colour == WHITE_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == BLACK_ID)) {
-                map |= (1ULL << idx);
-            }
-        } else {
-            map |= (1ULL << idx);
-        }
-    }
-
-    r = row + 1;
-    c = col;
-    if (r >= 0 && c >= 0) {
-        idx = r * 8 + c;
-        if (PIECE_ROLE(board[idx].piece.role) != 7) {
-            if ((piece_colour == BLACK_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == WHITE_ID) ||
-                (piece_colour == WHITE_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == BLACK_ID)) {
-                map |= (1ULL << idx);
-            }
-        } else {
-            map |= (1ULL << idx);
-        }
-    }
-
-    r = row;
-    c = col + 1;
-    if (r <= 7 && c <= 7) {
-        idx = r * 8 + c;
-        if (PIECE_ROLE(board[idx].piece.role) != 7) {
-            if ((piece_colour == BLACK_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == WHITE_ID) ||
-                (piece_colour == WHITE_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == BLACK_ID)) {
-                map |= (1ULL << idx);
-            }
-        } else {
-            map |= (1ULL << idx);
-        }
-    }
-
-    r = row;
-    c = col - 1;
-    if (r <= 7 && c >= 0) {
-        idx = r * 8 + c;
-        if (PIECE_ROLE(board[idx].piece.role) != 7) {
-            if ((piece_colour == BLACK_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == WHITE_ID) ||
-                (piece_colour == WHITE_ID &&
-                 PIECE_COLOUR(board[idx].piece.role) == BLACK_ID)) {
-                map |= (1ULL << idx);
-            }
-        } else {
-            map |= (1ULL << idx);
-        }
-    }
+    map = top | bottom | lr;
 
     return map;
 }
