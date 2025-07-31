@@ -124,9 +124,10 @@ int init_squares(mem_ctx_t *board_ctx, mem_ctx_t *pieces_ctx)
             (7 << 12) | (5 << 8) | BISHOP_ID | WHITE_MASK;
     squares[3].piece.role = (0 << 12) | (3 << 8) | QUEEN_ID | BLACK_MASK;
     squares[4].piece.role = (0 << 12) | (4 << 8) | KING_ID | BLACK_MASK;
-    squares[8 * 7 + 3].piece.role =
+    squares[(8 * 7) + 3].piece.role =
             (7 << 12) | (3 << 8) | QUEEN_ID | WHITE_MASK;
-    squares[8 * 7 + 4].piece.role = (7 << 12) | (4 << 8) | KING_ID | WHITE_MASK;
+    squares[(8 * 7) + 4].piece.role =
+            (7 << 12) | (4 << 8) | KING_ID | WHITE_MASK;
 
     return update_board();
 }

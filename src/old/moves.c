@@ -444,7 +444,7 @@ uint64_t king_move_map(struct square_t *board, uint8_t row, uint8_t col)
     uint8_t  piece_colour = PIECE_COLOUR(board[(row * 8) + col].piece.role);
 
     uint64_t top          = (( uint64_t )7 << (col - 1)) << ((row - 1) * 8);
-    uint64_t bottom       = (( uint64_t )7 >> (col - 1)) << (row + 1 * 8);
+    uint64_t bottom       = (( uint64_t )7 >> (col - 1)) << ((row + 1) * 8);
     if (col < 1) {
         top    = (( uint64_t )3 << (col)) << ((row - 1) * 8);
         bottom = (( uint64_t )3 << (col)) << ((row + 1) * 8);
