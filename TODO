@@ -1,5 +1,15 @@
+- Player 1 & Player 2
+- Lobby/Pairing/Pre-game screens
+- Board orientatation (player on bottom)
+
 - Game end logic
-- Check detection
 - Check mate / Stale mate detection
-- Reverse game board depending on P1/P2
-- Add start game and end game splashes
+- 1/2 depth analysis and evaluation
+
+- Networking 1v1 manual games
+
+- Find and fix Perft test suite mismatches
+
+BUGS:
+- Queen bottom right search dismisses collisions
+- Random segfaults (add tracing/logging framework)
