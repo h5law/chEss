@@ -12,4 +12,10 @@
 
 BUGS:
 - Queen bottom right search dismisses collisions
+- King take in check to resolve doesn't wipe piece
 - Random segfaults (add tracing/logging framework)
+
+- Segfaults may be related to indexing into a staee struct w/
+  dereferencing error or bitboard/positions array
+  Maybe incorrect square value when indexing into a masks array
+  Check bitboards, masks and pointer dereferencing
