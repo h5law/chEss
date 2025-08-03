@@ -1,4 +1,4 @@
-/* ui.h
+/* main.c
  * Copyright 2025 h5law <dev@h5law.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,20 +28,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef UI_H
-#define UI_H
+#include <stdio.h>
 
-#include "board.h"
-#include "dsa.h"
+#include <ndjin/bb.h>
 
-int  init_squares(mem_ctx_t *board_ctx, mem_ctx_t *pieces_ctx);
-void load_assets(void);
+#include "ui.h"
 
-int update_board(void);
-int update_input(struct game_state_t *gs);
-int draw(void);
-int draw_squares(void);
-int draw_piece(piece_t p, float x, float y);
-int draw_piece_middle(piece_t p, float x, float y);
-
-#endif /* UI_H */
+int main(int argc, char **argv)
+{
+    init_all();
+    init_board();
+    int rc = 0;
+    if ((rc = draw()) > 0) {
+        fprintf(stderr, "draw(): render loop error %d\n", rc);
+    }
+    return 0;
+}

@@ -1,4 +1,4 @@
-/* types.h
+/* fen.h
  * Copyright 2025 h5law <dev@h5law.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,14 +28,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef FEN_H
+#define FEN_H
+
 #include "types.h"
 
-const int char_pieces[] = {
-        ['P'] = P, ['N'] = N, ['B'] = B, ['R'] = R, ['Q'] = Q, ['K'] = K,
-        ['p'] = p, ['n'] = n, ['b'] = b, ['r'] = r, ['q'] = q, ['k'] = k,
+enum {
+    rank8    = 0,
+    rank7    = 1,
+    rank6    = 2,
+    rank5    = 3,
+    rank4    = 4,
+    rank3    = 5,
+    rank2    = 6,
+    rank1    = 7,
+    turn     = 8,
+    castling = 9,
+    epass    = 10,
+    halfmove = 11,
+    fullmove = 12,
 };
 
-const char piece_char[] = {
-        [P] = 'P', [N] = 'N', [B] = 'B', [R] = 'R', [Q] = 'Q', [K] = 'K',
-        [p] = 'p', [n] = 'n', [b] = 'b', [r] = 'r', [q] = 'q', [k] = 'k',
-};
+#define EMPTY_BOARD "8/8/8/8/8/8/8/8 w - - "
+#define START_BOARD "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
+
+#define STATE1                                                                 \
+    "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
+#define STATE2                                                                 \
+    "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
+#define STATE3                                                                 \
+    "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 4 9 "
+
+int parse_fen(char *fen, struct state_t *game_state);
+
+#endif /* FEN_H */
+
+/* vim: ft=c ts=4 sts=4 sw=4 ai et cin */

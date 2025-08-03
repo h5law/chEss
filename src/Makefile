@@ -4,18 +4,23 @@ DIAG = -Wall -Wextra -Wpedantic
 OFLAGS = -Ofast
 
 CC := gcc
-INCS := -I. -Iengine
+INCS := -Indjin
 LIBS := -lm
 CFLAGS := $(OFLAGS) $(DIAG) $(INCS) -MD -g
 LDFLAGS := $(LDFLAGS) $(LIBS)
 
 OBJS = \
-	engine/test.o \
-	engine/bb.o \
-	fen.o \
-	types.o
+	ndjin/types.o \
+	ndjin/fen.o \
+	ndjin/bb.o
 
-TEST = engine/engine_test
+GUI_OBJS = \
+	gui/ui.o \
+	gui/main.o
+
+TEST = test
+
+GUI = chess
 
 .PHONY: all build clean demo
 
@@ -24,7 +29,7 @@ all: clean build demo
 clean:
 	rm -f $(OBJS) *.o */*.o */*/*.o
 	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
-	rm -f $(TEST)
+	rm -f $(TEST) $(GUI)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
@@ -32,7 +37,11 @@ clean:
 $(TEST): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TEST) $(OBJS) $(LDFLAGS)
 
-build: $(OBJS) $(TEST)
+$(GUI): $(OBJS) $(GUI_OBJS)
+	$(CC) $(CFLAGS) -o $(GUI) $(OBJS) $(GUI_OBJS) $(LDFLAGS) -lraylib
+
+build: $(OBJS) $(GUI_OBJS) $(GUI)
 
 demo: clean build
-	./$(TEST)
+	./$(GUI)
+	# ./$(TEST)

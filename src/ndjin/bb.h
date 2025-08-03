@@ -31,49 +31,44 @@
 #ifndef BITBOARD_H
 #define BITBOARD_H
 
-#include "../types.h"
+#include "types.h"
 
-/* Castling bits binary protocol
- * 0001 - White King can Castle Kingside
- * 0010 - White King can Castle Queenside
- * 0100 - Black King can Castle Kingside
- * 1000 - Black King can Castle Queenside
- * ----
- * 1111 - Both sides can castle both directions
- * 1001 - Black can castle queenside and white kingside
- */
-enum { WKCK = 0x1, WKCQ = 0x2, BKCK = 0x4, BKCQ = 0x8 };
+static inline int get_time_ms(void);
 
-#define set_bit(bitboard, square) ((bitboard) |= (1ULL << (square)))
-#define get_bit(bitboard, square) ((bitboard) & (1ULL << (square)))
-#define pop_bit(bitboard, square) ((bitboard) &= ~(1ULL << (square)))
+static inline void print_tiles(void);
+static inline void print_bitboard(u64 bitboard);
+static inline void print_attacked(int side);
+static inline void print_board(int unicode);
+static inline void print_move(unsigned int move, int unicode);
+static inline void print_move_list(struct move_list_t *moves, int unicode);
 
-int get_time_ms(void);
+static inline u64 mask_pawn_attacks(int square, int side);
+static inline u64 mask_knight_attacks(int square);
+static inline u64 mask_king_attacks(int square);
+static inline u64 mask_bishop_attacks(int square);
+static inline u64 mask_rook_attacks(int square);
+static inline u64 generate_bishop_attacks(int square, u64 block);
+static inline u64 generate_rook_attacks(int square, u64 block);
+static inline u64 get_bishop_attacks(int square, u64 position);
+static inline u64 get_rook_attacks(int square, u64 position);
+static inline u64 get_queen_attacks(int square, u64 position);
 
-void print_tiles(void);
-void print_bitboard(u64 bitboard);
-void print_board(int unicode);
+inline int  get_attacked(struct state_t *state, int square, int side);
+int         make_move(unsigned int move, int move_flag);
+inline void generate_moves(struct move_list_t *list);
 
-u64 mask_pawn_attacks(int square, int side);
-u64 mask_knight_attacks(int square);
-u64 mask_king_attacks(int square);
-u64 mask_bishop_attacks(int square);
-u64 mask_rook_attacks(int square);
-u64 generate_bishop_attacks(int square, u64 block);
-u64 generate_rook_attacks(int square, u64 block);
-u64 get_bishop_attacks(int square, u64 position);
-u64 get_rook_attacks(int square, u64 position);
+void               init_all(void);
+static inline void init_slider_attacks(int piece);
+void               init_board(void);
 
-void init_all(void);
-void init_slider_attacks(int piece);
-void init_board(void);
+static inline int count_bits(u64 bitboard);
+static inline int get_lsb_index(u64 bitboard);
+static inline u64 set_positions(int idx, int mask_bit_count, u64 attack_mask);
 
-int count_bits(u64 bitboard);
-int get_lsb_index(u64 bitboard);
-u64 set_positions(int idx, int mask_bit_count, u64 attack_mask);
-
-u64 xorshift64(void);
-u64 rand_u64(void);
-u64 find_magic(int square, int m, int piece);
+static inline u64 xorshift64(void);
+static inline u64 rand_u64(void);
+static inline u64 find_magic(int square, int m, int piece);
 
 #endif /* BITBOARD_H */
+
+/* vim: ft=c ts=4 sts=4 sw=4 ai et cin */

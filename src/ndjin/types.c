@@ -1,4 +1,4 @@
-/* fen.h
+/* types.c
  * Copyright 2025 h5law <dev@h5law.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,38 +28,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef FEN_H
-#define FEN_H
-
 #include "types.h"
 
-enum {
-    rank8    = 0,
-    rank7    = 1,
-    rank6    = 2,
-    rank5    = 3,
-    rank4    = 4,
-    rank3    = 5,
-    rank2    = 6,
-    rank1    = 7,
-    turn     = 8,
-    castling = 9,
-    epass    = 10,
-    halfmove = 11,
-    fullmove = 12,
+/* clang-format off */
+const char *square_to_coord[] = {
+    "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+    "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+    "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+    "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+    "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+    "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+    "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+    "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
 };
 
-#define EMPTY_BOARD "8/8/8/8/8/8/8/8 w - - "
-#define START_BOARD "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
+const char  ascii_pieces[13]   = "PNBRQKpnbrqk";
+const char *unicode_pieces[12] = {"♟︎", "♞", "♝", "♜", "♛", "♚",
+                                  "♙", "♘", "♗", "♖", "♕", "♔"};
 
-#define STATE1                                                                 \
-    "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
-#define STATE2                                                                 \
-    "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
-#define STATE3                                                                 \
-    "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 4 9 "
+const char promoted_pieces[] = {[Q] = 'q', [R] = 'r', [B] = 'b', [N] = 'n',
+                                [q] = 'q', [r] = 'r', [b] = 'b', [n] = 'n'};
+/* clang-format on */
 
-int parse_fen(char *fen, u64 bitboards[12], u64 positions[3], int *side,
-              int *castle, int *enpassant, int *ply, int *moves);
+const int char_pieces[] = {
+        ['P'] = P, ['N'] = N, ['B'] = B, ['R'] = R, ['Q'] = Q, ['K'] = K,
+        ['p'] = p, ['n'] = n, ['b'] = b, ['r'] = r, ['q'] = q, ['k'] = k,
+};
 
-#endif /* FEN_H */
+const char piece_char[] = {
+        [P] = 'P', [N] = 'N', [B] = 'B', [R] = 'R', [Q] = 'Q', [K] = 'K',
+        [p] = 'p', [n] = 'n', [b] = 'b', [r] = 'r', [q] = 'q', [k] = 'k',
+};
+
+/* vim: ft=c ts=4 sts=4 sw=4 ai et cin */

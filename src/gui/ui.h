@@ -1,4 +1,4 @@
-/* moves.h
+/* ui.h
  * Copyright 2025 h5law <dev@h5law.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,23 +28,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MOVES_H
-#define MOVES_H
+#ifndef UI_H
+#define UI_H
 
-#include <stdint.h>
+#include <ndjin/types.h>
 
-#include "board.h"
+void load_assets(void);
+void draw_squares(void);
+int  draw_bitboard(u64 bitboard, int piece, int check);
+int  draw(void);
+void draw_piece(int piece, float x, float y);
+void draw_piece_middle(int piece, float x, float y);
 
-#define SQUARE_AVAILABLE(square, move_map)                                     \
-    (((( uint64_t )1 << square->col) << (square->row * 8) & move_map) > 0 ? 1  \
-                                                                          : 0)
+#endif /* UI_H */
 
-uint64_t move_mask(struct square_t *board, uint16_t piece);
-uint64_t knight_move_map(uint8_t row, uint8_t col);
-uint64_t pawn_move_map(struct square_t *board, uint8_t row, uint8_t col);
-uint64_t bishop_move_map(struct square_t *board, uint8_t row, uint8_t col);
-uint64_t rook_move_map(struct square_t *board, uint8_t row, uint8_t col);
-uint64_t queen_move_map(struct square_t *board, uint8_t row, uint8_t col);
-uint64_t king_move_map(struct square_t *board, uint8_t row, uint8_t col);
-
-#endif /* MOVES_H */
+/* vim: ft=c ts=4 sts=4 sw=4 ai et cin */
