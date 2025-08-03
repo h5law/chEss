@@ -111,17 +111,20 @@ void filter_legal(struct state_t *state, struct move_list_t *moves,
 
 double symmetric_eval(struct state_t *state, struct move_list_t *moves)
 {
-    double score                  = 0.0;
-    double material               = material_eval(state);
-    score                        += material;
+    double score                     = 0.0;
+    double material                  = material_eval(state);
+    score                           += material;
 
-    struct move_list_t legals[1]  = {0};
-    filter_legal(state, moves, legals);
-    if (legals->count == 0) {
-        return NAN;
-    }
+    struct move_list_t opp_moves[1]  = {0};
+    struct move_list_t legals[2]     = {0};
+    filter_legal(state, moves, &legals[0]);
+    state->side ^= 1;
+    generate_moves(opp_moves);
+    filter_legal(state, opp_moves, &legals[1]);
+    state->side ^= 1;
 
-    score += MOBILITY_WEIGHT * ( double )legals->count;
+    score       += MOBILITY_WEIGHT *
+             (( double )legals[0].count - ( double )legals[1].count);
 
     return score;
 }
