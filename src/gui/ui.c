@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <raylib.h>
+#include "raylib.h"
 
 #include <ndjin/bb.h>
 #include <ndjin/types.h>
