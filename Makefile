@@ -43,7 +43,7 @@ $(TEST): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TEST) $(OBJS) $(LDFLAGS)
 
 $(GUI): $(OBJS) $(GUI_OBJS)
-	$(CC) $(CFLAGS) -o $(GUI) $(OBJS) $(GUI_OBJS) $(LDFLAGS) -lraylib
+	$(CC) $(CFLAGS) -o $(GUI) $(OBJS) $(GUI_OBJS) $(LDFLAGS)
 
 $(PERFT):
 	$(CC) -Ofast -Isrc/ndjin -D_PERFT_TEST -o $(PERFT) $(wildcard src/ndjin/*.c) -lm

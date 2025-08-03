@@ -1119,7 +1119,7 @@ int make_move(struct state_t *state, unsigned int move, int move_flag)
             for (int i = start_piece; i <= end_piece; ++i) {
                 if (get_bit(state->bitboards[i], target)) {
                     pop_bit(state->bitboards[i], target);
-                    pop_bit(state->positions[1 - state->side], target);
+                    pop_bit(state->positions[state->side ^ 1], target);
                     break;
                 }
             }
@@ -1135,7 +1135,7 @@ int make_move(struct state_t *state, unsigned int move, int move_flag)
                 pop_bit(state->bitboards[p], target - 8);
                 pop_bit(state->positions[black], target - 8);
             } else {
-                pop_bit(state->bitboards[p], target + 8);
+                pop_bit(state->bitboards[P], target + 8);
                 pop_bit(state->positions[white], target + 8);
             }
         }
