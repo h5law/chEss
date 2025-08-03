@@ -28,14 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <raylib.h>
 
 #include <ndjin/bb.h>
-#include <ndjin/eval.h>
 #include <ndjin/types.h>
 
 #include "ui.h"
@@ -237,8 +235,6 @@ struct square_t get_square(int x, int y)
             break;
         }
     }
-    // fprintf(stderr, "get_square(): piece: %c\tsquare: %d\n",
-    //         ascii_pieces[square.piece], sq);
     return square;
 }
 
@@ -304,7 +300,7 @@ int draw(void)
     load_assets();
 
     u64 nstate, pstate = game_state.positions[2];
-    generate_moves(&moves);
+    generate_moves(&game_state, &moves);
 
     char buf3[6]  = {'C', 'H', 'E', 'C', 'K', '\0'};
     char buf4[10] = {'C', 'H', 'E', 'C', 'K', 'M', 'A', 'T', 'E', '\0'};
@@ -332,7 +328,7 @@ int draw(void)
             pstate = nstate;
             fprintf(stderr, "generate_moves(): state changed, "
                             "generating moveset\n");
-            generate_moves(&moves);
+            generate_moves(&game_state, &moves);
         }
         if (moves.count > 0) {
             update_input();

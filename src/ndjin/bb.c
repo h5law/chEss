@@ -166,7 +166,7 @@ int stopped = 0;
 //                                 Functions                                  //
 ////////////////////////////////////////////////////////////////////////////////
 
-static inline int get_time_ms(void)
+int get_time_ms(void)
 {
     struct timeval time_value;
     gettimeofday(&time_value, NULL);
@@ -730,73 +730,73 @@ const int rook_bits[64] = {
 };
 
 const u64 bishop_magics[64] = {
-    598988671884197920ULL,          9011877149474820ULL,
-    20284361773416448ULL,           10137636828106752ULL,
-    72356936078589952ULL,           2324421474939568129ULL,
-    13979473444929339493ULL,        6941806553628942370ULL,
-    36314704436790308ULL,           612859053982367814ULL,
-    9223380867849158789ULL,         2476065423489ULL,
-    5188288677525192864ULL,         146369195538386960ULL,
-    1441451227162361856ULL,         576460892024604936ULL,
-    9007233760231556ULL,            577165132510070272ULL,
-    2310944760413814792ULL,         9226901503676055552ULL,
-    1161092902486016ULL,            142971005634563ULL,
-    281758462378754ULL,             72620551675707776ULL,
-    22590565971657728ULL,           1878010940256420096ULL,
-    11261198109769984ULL,           9232388040809267208ULL,
-    4629982235527856130ULL,         2310347709434839360ULL,
-    15763148736862400ULL,           10448510616227350528ULL,
-    1160948507536789504ULL,         649662534236242432ULL,
-    9027583313183746ULL,            1128101078106240ULL,
-    4756663275160174624ULL,         18588352169379968ULL,
-    9560161262802047232ULL,         45247660852019713ULL,
-    9556796812239587328ULL,         576621316975665672ULL,
-    1317373543763177476ULL,         288230522250070017ULL,
-    2383600540400493089ULL,         4629736254420844608ULL,
-    2326188374664186888ULL,         1310618412766003328ULL,
-    9944512112913090568ULL,         1166573367663591552ULL,
-    18025488132087808ULL,           1154047405059479552ULL,
-    10133238817488896ULL,           9042392250451968ULL,
-    1156160734615437504ULL,         4505833014854656ULL,
-    11531486639308423168ULL,        1170936179136137216ULL,
-    603482350621820928ULL,          9223372586614919684ULL,
-    580973148325937664ULL,          13835112206498662792ULL,
-    4535519150600ULL,               616995556415799552ULL,
+	598988671884197920ULL,           9011877149474820ULL,
+	20284361773416448ULL,            10137636828106752ULL,
+	72356936078589952ULL,            2324421474939568129ULL,
+	13979473444929339493ULL,         6941806553628942370ULL,
+	36314704436790308ULL,            612859053982367814ULL,
+	9223380867849158789ULL,          2476065423489ULL,
+	5188288677525192864ULL,          146369195538386960ULL,
+	1441451227162361856ULL,          576460892024604936ULL,
+	9007233760231556ULL,             577165132510070272ULL,
+	2310944760413814792ULL,          9226901503676055552ULL,
+	1161092902486016ULL,             142971005634563ULL,
+	281758462378754ULL,              72620551675707776ULL,
+	22590565971657728ULL,            1878010940256420096ULL,
+	11261198109769984ULL,            9232388040809267208ULL,
+	4629982235527856130ULL,          2310347709434839360ULL,
+	15763148736862400ULL,            10448510616227350528ULL,
+	1160948507536789504ULL,          649662534236242432ULL,
+	9027583313183746ULL,             1128101078106240ULL,
+	4756663275160174624ULL,          18588352169379968ULL,
+	9560161262802047232ULL,          45247660852019713ULL,
+	9556796812239587328ULL,          576621316975665672ULL,
+	1317373543763177476ULL,          288230522250070017ULL,
+	2383600540400493089ULL,          4629736254420844608ULL,
+	2326188374664186888ULL,          1310618412766003328ULL,
+	9944512112913090568ULL,          1166573367663591552ULL,
+	18025488132087808ULL,            1154047405059479552ULL,
+	10133238817488896ULL,            9042392250451968ULL,
+	1156160734615437504ULL,          4505833014854656ULL,
+	11531486639308423168ULL,         1170936179136137216ULL,
+	603482350621820928ULL,           9223372586614919684ULL,
+	580973148325937664ULL,           13835112206498662792ULL,
+	4535519150600ULL,                616995556415799552ULL,
 };
 
 const u64 rook_magics[64] = {
-    9259400997359468545ULL,         162129655342669832ULL,
-    144132917868642944ULL,          324264121241438209ULL,
-    4791832752368396288ULL,         144117389381075216ULL,
-    4791840998646874368ULL,         144119590426255426ULL,
-    36732494124580912ULL,           612630837640306688ULL,
-    5478206871678488576ULL,         1266706190174208ULL,
-    36733034350773248ULL,           141287311278592ULL,
-    149463221223559424ULL,          74591007357796482ULL,
-    36029072433758216ULL,           18019071971819584ULL,
-    1153066090654605314ULL,         18025393929863680ULL,
-    1127003714488320ULL,            22526799600682000ULL,
-    4901196226734739480ULL,         9259684507877974148ULL,
-    18155279879389184ULL,           1819471842721669120ULL,
-    9715568211927556ULL,            36037595267862528ULL,
-    398569118926111746ULL,          1130300100968576ULL,
-    8813272957456ULL,               721711194724914185ULL,
-    153192756955578496ULL,          18023263324078112ULL,
-    4503670502727680ULL,            292753594388512ULL,
-    2251973801806848ULL,            2455024815623374088ULL,
-    15709683667985008641ULL,        882709926118424737ULL,
-    1167699079397539840ULL,         35187861831681ULL,
-    13591063767875600ULL,           2305860605696868360ULL,
-    1593152766363074688ULL,         577023719445135362ULL,
-    2401337723846736ULL,            9022055685160964ULL,
-    3476779196343124352ULL,         18084767791580224ULL,
-    9015996422553664ULL,            162270358434480256ULL,
-    1170940335523692800ULL,         576742244460528384ULL,
-    3395946925294592ULL,            4683762448066150912ULL,
-    11673789834304426626ULL,        4962984665024626730ULL,
-    109845747117066257ULL,          1298180186992345097ULL,
-    5067685870191618ULL,            1155454796577245185ULL,
-    90143600658229252ULL,           18708888469634ULL,
+	36029220362649728ULL,            144133888367862144ULL,
+	144132917868642944ULL,           324264121241438209ULL,
+	4791832752368396288ULL,          144117389381075216ULL,
+	4791840998646874368ULL,          144119590426255426ULL,
+	36732494124580912ULL,            612630837640306688ULL,
+	5478206871678488576ULL,          1266706190174208ULL,
+	36733034350773248ULL,            141287311278592ULL,
+	149463221223559424ULL,           74591007357796482ULL,
+	36029072433758216ULL,            18019071971819584ULL,
+	1153066090654605314ULL,          18025393929863680ULL,
+	1127003714488320ULL,             22526799600682000ULL,
+	4901196226734739480ULL,          9259684507877974148ULL,
+	18155279879389184ULL,            1819471842721669120ULL,
+	9715568211927556ULL,             36037595267862528ULL,
+	398569118926111746ULL,           1130300100968576ULL,
+	8813272957456ULL,                721711194724914185ULL,
+	153192756955578496ULL,           18023263324078112ULL,
+	4503670502727680ULL,             292753594388512ULL,
+	2251973801806848ULL,             2455024815623374088ULL,
+	15709683667985008641ULL,         882709926118424737ULL,
+	1167699079397539840ULL,          35187861831681ULL,
+	13591063767875600ULL,            2305860605696868360ULL,
+	1593152766363074688ULL,          577023719445135362ULL,
+	2401337723846736ULL,             9022055685160964ULL,
+	3476779196343124352ULL,          18084767791580224ULL,
+	9015996422553664ULL,             162270358434480256ULL,
+	1170940335523692800ULL,          576742244460528384ULL,
+	3395946925294592ULL,             4683762448066150912ULL,
+	11673789834304426626ULL,         4962984665024626730ULL,
+	109845747117066257ULL,           1298180186992345097ULL,
+	5067685870191618ULL,             1155454796577245185ULL,
+	90143600658229252ULL,            18708888469634ULL,
 };
 /* clang-format on */
 
@@ -1025,6 +1025,12 @@ void init_board(void)
 //                                 Moves                                      //
 ////////////////////////////////////////////////////////////////////////////////
 
+// u64 moves;
+// u64 castles;
+// u64 captures;
+// u64 eps;
+// u64 promotions;
+
 static inline void add_move(struct move_list_t *moves, unsigned int move)
 {
     moves->squares[move & 63].moves[moves->squares[move & 63].count++] = move;
@@ -1206,7 +1212,7 @@ int make_move(struct state_t *state, unsigned int move, int move_flag)
     return 0;
 }
 
-void generate_moves(struct move_list_t *list)
+void generate_moves(struct state_t *state, struct move_list_t *list)
 {
     if (!list)
         return;
@@ -1219,16 +1225,16 @@ void generate_moves(struct move_list_t *list)
     list->count = 0;
 
     for (int piece = P; piece <= k; ++piece) {
-        bitboard = game_state.bitboards[piece];
+        bitboard = state->bitboards[piece];
         /* white pawns & white king castling */
-        if (game_state.side == white) {
+        if (state->side == white) {
             if (piece == P) {
                 while (bitboard) {
                     source = get_lsb_index(bitboard);
                     target = source + 8;
 
                     if ((target >= 0 && target < 64) &&
-                        !get_bit(game_state.positions[both], target)) {
+                        !get_bit(state->positions[both], target)) {
                         /* promotion */
                         if (source >= a7 && source <= h7) {
                             add_move(list, ENCODE_MOVE(source, target, piece, B,
@@ -1239,31 +1245,35 @@ void generate_moves(struct move_list_t *list)
                                                        0, 0, 0, 0));
                             add_move(list, ENCODE_MOVE(source, target, piece, Q,
                                                        0, 0, 0, 0));
+                            // promotions += 4;
+                            // moves      += 4;
                         } else {
-                            if (!get_bit(game_state.positions[both], target)) {
+                            if (!get_bit(state->positions[both], target)) {
                                 add_move(list,
                                          ENCODE_MOVE(source, target, piece,
                                                      piece, 0, 0, 0, 0));
+                                // ++moves;
                                 if ((source >= a2 && source <= h2) &&
-                                    !get_bit(game_state.positions[both],
+                                    !get_bit(state->positions[both],
                                              target + 8)) {
                                     add_move(list,
                                              ENCODE_MOVE(source, (target + 8),
                                                          piece, piece, 0, 1, 0,
                                                          0));
+                                    // ++moves;
                                 }
                             }
                         }
                     }
 
-                    attacks = pawn_attacks[game_state.side][source] &
-                              game_state.positions[black];
+                    attacks = pawn_attacks[state->side][source] &
+                              state->positions[black];
 
                     while (attacks) {
                         target = get_lsb_index(attacks);
 
                         if ((target >= 0 && target < 64) &&
-                            get_bit(game_state.positions[black], target)) {
+                            get_bit(state->positions[black], target)) {
                             /* capture promotion */
                             if (source >= a7 && source <= h7) {
                                 add_move(list,
@@ -1278,12 +1288,16 @@ void generate_moves(struct move_list_t *list)
                                 add_move(list,
                                          ENCODE_MOVE(source, target, piece, Q,
                                                      1, 0, 0, 0));
+                                // promotions += 4;
+                                // captures   += 4;
+                                // moves      += 4;
                             } else {
-                                if (get_bit(game_state.positions[black],
-                                            target)) {
+                                if (get_bit(state->positions[black], target)) {
                                     add_move(list,
                                              ENCODE_MOVE(source, target, piece,
                                                          piece, 1, 0, 0, 0));
+                                    // ++captures;
+                                    // ++moves;
                                 }
                             }
                         }
@@ -1292,16 +1306,19 @@ void generate_moves(struct move_list_t *list)
                     }
 
                     /* en passant */
-                    if (game_state.enpassant != no_sq) {
+                    if (state->enpassant != no_sq) {
                         u64 enpassant_attacks =
-                                pawn_attacks[game_state.side][source] &
-                                (1ULL << game_state.enpassant);
+                                pawn_attacks[state->side][source] &
+                                (1ULL << state->enpassant);
                         if (enpassant_attacks) {
                             int target_enpassant =
                                     get_lsb_index(enpassant_attacks);
                             add_move(list,
                                      ENCODE_MOVE(source, target_enpassant,
                                                  piece, piece, 1, 0, 1, 0));
+                            // ++captures;
+                            // ++eps;
+                            // ++moves;
                         }
                     }
 
@@ -1311,24 +1328,28 @@ void generate_moves(struct move_list_t *list)
 
             /* castling */
             if (piece == K) {
-                if (game_state.castle & WKCK) {
-                    if (!get_bit(game_state.positions[both], f1) &&
-                        !get_bit(game_state.positions[both], g1)) {
+                if (state->castle & WKCK) {
+                    if (!get_bit(state->positions[both], f1) &&
+                        !get_bit(state->positions[both], g1)) {
                         if (!get_attacked(&game_state, e1, black) &&
                             !get_attacked(&game_state, f1, black)) {
                             add_move(list, ENCODE_MOVE(e1, g1, piece, piece, 0,
                                                        0, 0, 1));
+                            // ++moves;
+                            // ++castles;
                         }
                     }
                 }
-                if (game_state.castle & WKCQ) {
-                    if (!get_bit(game_state.positions[both], d1) &&
-                        !get_bit(game_state.positions[both], c1) &&
-                        !get_bit(game_state.positions[both], b1)) {
+                if (state->castle & WKCQ) {
+                    if (!get_bit(state->positions[both], d1) &&
+                        !get_bit(state->positions[both], c1) &&
+                        !get_bit(state->positions[both], b1)) {
                         if (!get_attacked(&game_state, d1, black) &&
                             !get_attacked(&game_state, e1, black)) {
                             add_move(list, ENCODE_MOVE(e1, c1, piece, piece, 0,
                                                        0, 0, 1));
+                            // ++moves;
+                            // ++castles;
                         }
                     }
                 }
@@ -1336,14 +1357,14 @@ void generate_moves(struct move_list_t *list)
         }
 
         /* black pawns & black king castling */
-        else if (game_state.side == black) {
+        else if (state->side == black) {
             if (piece == p) {
                 while (bitboard) {
                     source = get_lsb_index(bitboard);
                     target = source - 8;
 
                     if ((target >= 0 && target < 64) &&
-                        !get_bit(game_state.positions[both], target)) {
+                        !get_bit(state->positions[both], target)) {
                         /* promotion */
                         if (source >= a2 && source <= h2) {
                             add_move(list, ENCODE_MOVE(source, target, piece, b,
@@ -1354,31 +1375,35 @@ void generate_moves(struct move_list_t *list)
                                                        0, 0, 0, 0));
                             add_move(list, ENCODE_MOVE(source, target, piece, q,
                                                        0, 0, 0, 0));
+                            // promotions += 4;
+                            // moves      += 4;
                         } else {
-                            if (!get_bit(game_state.positions[both], target)) {
+                            if (!get_bit(state->positions[both], target)) {
                                 add_move(list,
                                          ENCODE_MOVE(source, target, piece,
                                                      piece, 0, 0, 0, 0));
+                                // ++moves;
                                 if ((source >= a7 && source <= h7) &&
-                                    !get_bit(game_state.positions[both],
+                                    !get_bit(state->positions[both],
                                              target - 8)) {
                                     add_move(list,
                                              ENCODE_MOVE(source, (target - 8),
                                                          piece, piece, 0, 1, 0,
                                                          0));
+                                    // ++moves;
                                 }
                             }
                         }
                     }
 
-                    attacks = pawn_attacks[game_state.side][source] &
-                              game_state.positions[white];
+                    attacks = pawn_attacks[state->side][source] &
+                              state->positions[white];
 
                     while (attacks) {
                         target = get_lsb_index(attacks);
 
                         if ((target >= 0 && target < 64) &&
-                            get_bit(game_state.positions[white], target)) {
+                            get_bit(state->positions[white], target)) {
                             /* capture promotion */
                             if (source >= a2 && source <= h2) {
                                 add_move(list,
@@ -1393,12 +1418,16 @@ void generate_moves(struct move_list_t *list)
                                 add_move(list,
                                          ENCODE_MOVE(source, target, piece, q,
                                                      1, 0, 0, 0));
+                                // promotions += 4;
+                                // captures   += 4;
+                                // moves      += 4;
                             } else {
-                                if (get_bit(game_state.positions[white],
-                                            target)) {
+                                if (get_bit(state->positions[white], target)) {
                                     add_move(list,
                                              ENCODE_MOVE(source, target, piece,
                                                          piece, 1, 0, 0, 0));
+                                    // ++captures;
+                                    // ++moves;
                                 }
                             }
                         }
@@ -1407,16 +1436,19 @@ void generate_moves(struct move_list_t *list)
                     }
 
                     /* en passant */
-                    if (game_state.enpassant != no_sq) {
+                    if (state->enpassant != no_sq) {
                         u64 enpassant_attacks =
-                                pawn_attacks[game_state.side][source] &
-                                (1ULL << game_state.enpassant);
+                                pawn_attacks[state->side][source] &
+                                (1ULL << state->enpassant);
                         if (enpassant_attacks) {
                             int target_enpassant =
                                     get_lsb_index(enpassant_attacks);
                             add_move(list,
                                      ENCODE_MOVE(source, target_enpassant,
                                                  piece, piece, 1, 0, 1, 0));
+                            // ++eps;
+                            // ++moves;
+                            // ++captures;
                         }
                     }
 
@@ -1426,24 +1458,28 @@ void generate_moves(struct move_list_t *list)
 
             /* castling */
             if (piece == k) {
-                if (game_state.castle & BKCK) {
-                    if (!get_bit(game_state.positions[both], f8) &&
-                        !get_bit(game_state.positions[both], g8)) {
+                if (state->castle & BKCK) {
+                    if (!get_bit(state->positions[both], f8) &&
+                        !get_bit(state->positions[both], g8)) {
                         if (!get_attacked(&game_state, e8, white) &&
                             !get_attacked(&game_state, f8, white)) {
                             add_move(list, ENCODE_MOVE(e8, g8, piece, piece, 0,
                                                        0, 0, 1));
+                            // ++castles;
+                            // ++moves;
                         }
                     }
                 }
-                if (game_state.castle & BKCQ) {
-                    if (!get_bit(game_state.positions[both], d8) &&
-                        !get_bit(game_state.positions[both], c8) &&
-                        !get_bit(game_state.positions[both], b8)) {
+                if (state->castle & BKCQ) {
+                    if (!get_bit(state->positions[both], d8) &&
+                        !get_bit(state->positions[both], c8) &&
+                        !get_bit(state->positions[both], b8)) {
                         if (!get_attacked(&game_state, d8, white) &&
                             !get_attacked(&game_state, e8, white)) {
                             add_move(list, ENCODE_MOVE(e8, c8, piece, piece, 0,
                                                        0, 0, 1));
+                            // ++castles;
+                            // ++moves;
                         }
                     }
                 }
@@ -1451,26 +1487,27 @@ void generate_moves(struct move_list_t *list)
         }
 
         /* knight */
-        if ((game_state.side == white) ? piece == N : piece == n) {
+        if ((state->side == white) ? piece == N : piece == n) {
             while (bitboard) {
                 source  = get_lsb_index(bitboard);
 
                 attacks = knight_attacks[source] &
-                          ((game_state.side == white)
-                                   ? ~game_state.positions[white]
-                                   : ~game_state.positions[black]);
+                          ((state->side == white) ? ~state->positions[white]
+                                                  : ~state->positions[black]);
                 while (attacks) {
                     target = get_lsb_index(attacks);
 
-                    if ((game_state.side == white)
-                                ? get_bit(game_state.positions[black], target)
-                                : get_bit(game_state.positions[white],
-                                          target)) {
+                    if ((state->side == white)
+                                ? get_bit(state->positions[black], target)
+                                : get_bit(state->positions[white], target)) {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
                                                    1, 0, 0, 0));
+                        // ++captures;
+                        // ++moves;
                     } else {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
                                                    0, 0, 0, 0));
+                        // ++moves;
                     }
 
                     pop_bit(attacks, target);
@@ -1481,27 +1518,27 @@ void generate_moves(struct move_list_t *list)
         }
 
         /* bishop */
-        if ((game_state.side == white) ? piece == B : piece == b) {
+        if ((state->side == white) ? piece == B : piece == b) {
             while (bitboard) {
-                source = get_lsb_index(bitboard);
+                source  = get_lsb_index(bitboard);
 
-                attacks =
-                        get_bishop_attacks(source, game_state.positions[both]) &
-                        ((game_state.side == white)
-                                 ? ~game_state.positions[white]
-                                 : ~game_state.positions[black]);
+                attacks = get_bishop_attacks(source, state->positions[both]) &
+                          ((state->side == white) ? ~state->positions[white]
+                                                  : ~state->positions[black]);
                 while (attacks) {
                     target = get_lsb_index(attacks);
 
-                    if ((game_state.side == white)
-                                ? get_bit(game_state.positions[black], target)
-                                : get_bit(game_state.positions[white],
-                                          target)) {
+                    if ((state->side == white)
+                                ? get_bit(state->positions[black], target)
+                                : get_bit(state->positions[white], target)) {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
                                                    1, 0, 0, 0));
+                        // ++captures;
+                        // ++moves;
                     } else {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
                                                    0, 0, 0, 0));
+                        // ++moves;
                     }
 
                     pop_bit(attacks, target);
@@ -1512,26 +1549,27 @@ void generate_moves(struct move_list_t *list)
         }
 
         /* rook */
-        if ((game_state.side == white) ? piece == R : piece == r) {
+        if ((state->side == white) ? piece == R : piece == r) {
             while (bitboard) {
                 source  = get_lsb_index(bitboard);
 
-                attacks = get_rook_attacks(source, game_state.positions[both]) &
-                          ((game_state.side == white)
-                                   ? ~game_state.positions[white]
-                                   : ~game_state.positions[black]);
+                attacks = get_rook_attacks(source, state->positions[both]) &
+                          ((state->side == white) ? ~state->positions[white]
+                                                  : ~state->positions[black]);
                 while (attacks) {
                     target = get_lsb_index(attacks);
 
-                    if ((game_state.side == white)
-                                ? get_bit(game_state.positions[black], target)
-                                : get_bit(game_state.positions[white],
-                                          target)) {
+                    if ((state->side == white)
+                                ? get_bit(state->positions[black], target)
+                                : get_bit(state->positions[white], target)) {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
                                                    1, 0, 0, 0));
+                        // ++captures;
+                        // ++moves;
                     } else {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
                                                    0, 0, 0, 0));
+                        // ++moves;
                     }
 
                     pop_bit(attacks, target);
@@ -1542,27 +1580,27 @@ void generate_moves(struct move_list_t *list)
         }
 
         /* queen */
-        if ((game_state.side == white) ? piece == Q : piece == q) {
+        if ((state->side == white) ? piece == Q : piece == q) {
             while (bitboard) {
-                source = get_lsb_index(bitboard);
+                source  = get_lsb_index(bitboard);
 
-                attacks =
-                        get_queen_attacks(source, game_state.positions[both]) &
-                        ((game_state.side == white)
-                                 ? ~game_state.positions[white]
-                                 : ~game_state.positions[black]);
+                attacks = get_queen_attacks(source, state->positions[both]) &
+                          ((state->side == white) ? ~state->positions[white]
+                                                  : ~state->positions[black]);
                 while (attacks) {
                     target = get_lsb_index(attacks);
 
-                    if ((game_state.side == white)
-                                ? get_bit(game_state.positions[black], target)
-                                : get_bit(game_state.positions[white],
-                                          target)) {
+                    if ((state->side == white)
+                                ? get_bit(state->positions[black], target)
+                                : get_bit(state->positions[white], target)) {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
                                                    1, 0, 0, 0));
+                        // ++captures;
+                        // ++moves;
                     } else {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
                                                    0, 0, 0, 0));
+                        // ++moves;
                     }
 
                     pop_bit(attacks, target);
@@ -1573,26 +1611,27 @@ void generate_moves(struct move_list_t *list)
         }
 
         /* king */
-        if ((game_state.side == white) ? piece == K : piece == k) {
+        if ((state->side == white) ? piece == K : piece == k) {
             while (bitboard) {
                 source  = get_lsb_index(bitboard);
 
                 attacks = king_attacks[source] &
-                          ((game_state.side == white)
-                                   ? ~game_state.positions[white]
-                                   : ~game_state.positions[black]);
+                          ((state->side == white) ? ~state->positions[white]
+                                                  : ~state->positions[black]);
                 while (attacks) {
                     target = get_lsb_index(attacks);
 
-                    if ((game_state.side == white)
-                                ? get_bit(game_state.positions[black], target)
-                                : get_bit(game_state.positions[white],
-                                          target)) {
+                    if ((state->side == white)
+                                ? get_bit(state->positions[black], target)
+                                : get_bit(state->positions[white], target)) {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
                                                    1, 0, 0, 0));
+                        // ++captures;
+                        // ++moves;
                     } else {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
                                                    0, 0, 0, 0));
+                        // ++moves;
                     }
 
                     pop_bit(attacks, target);
@@ -1607,10 +1646,100 @@ void generate_moves(struct move_list_t *list)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//                                Evaluation                                  //
+////////////////////////////////////////////////////////////////////////////////
+
+double material_eval(struct state_t *state)
+{
+    double result = 0;
+
+    int k, kprime = 0;
+    int q, qprime = 0;
+    int r, rprime = 0;
+    int b, bprime = 0;
+    int n, nprime = 0;
+    int p, pprime = 0;
+    if (state->side == white) {
+        p      = count_bits(state->bitboards[0]);
+        pprime = count_bits(state->bitboards[6]);
+        n      = count_bits(state->bitboards[1]);
+        nprime = count_bits(state->bitboards[7]);
+        b      = count_bits(state->bitboards[2]);
+        bprime = count_bits(state->bitboards[8]);
+        r      = count_bits(state->bitboards[3]);
+        rprime = count_bits(state->bitboards[9]);
+        q      = count_bits(state->bitboards[4]);
+        qprime = count_bits(state->bitboards[10]);
+        k      = count_bits(state->bitboards[5]);
+        kprime = count_bits(state->bitboards[11]);
+    } else {
+        p      = count_bits(state->bitboards[6]);
+        pprime = count_bits(state->bitboards[0]);
+        n      = count_bits(state->bitboards[7]);
+        nprime = count_bits(state->bitboards[1]);
+        b      = count_bits(state->bitboards[8]);
+        bprime = count_bits(state->bitboards[2]);
+        r      = count_bits(state->bitboards[9]);
+        rprime = count_bits(state->bitboards[3]);
+        q      = count_bits(state->bitboards[10]);
+        qprime = count_bits(state->bitboards[4]);
+        k      = count_bits(state->bitboards[11]);
+        kprime = count_bits(state->bitboards[5]);
+    }
+
+    result += KING_WEIGHT * (( double )k - ( double )kprime);
+    result += QUEEN_WEIGHT * (( double )q - ( double )qprime);
+    result += ROOK_WEIGHT * (( double )r - ( double )rprime);
+    result += BISHOP_WEIGHT * (( double )b - ( double )bprime);
+    result += KNIGHT_WEIGHT * (( double )n - ( double )nprime);
+    result += PAWN_WEIGHT * (( double )p - ( double )pprime);
+
+    return result;
+}
+
+void filter_legal(struct state_t *state, struct move_list_t *moves,
+                  struct move_list_t *legal)
+{
+    struct state_t backup = {0};
+    for (int i = 0; i < 64; ++i) {
+        for (int j = 0; j < moves->squares[i].count; ++j) {
+            BOARD_BACKUP(state, &backup);
+            if (make_move(&backup, moves->squares[i].moves[j], all_moves) ==
+                1) {
+                legal->squares[i].moves[legal->squares[i].count++] =
+                        moves->squares[i].moves[j];
+                ++legal->count;
+            }
+        }
+    }
+    return;
+}
+
+double symmetric_eval(struct state_t *state, struct move_list_t *moves)
+{
+    double score                     = 0.0;
+    double material                  = material_eval(state);
+    score                           += material;
+
+    struct move_list_t opp_moves[1]  = {0};
+    struct move_list_t legals[2]     = {0};
+    filter_legal(state, moves, &legals[0]);
+    state->side ^= 1;
+    generate_moves(state, opp_moves);
+    filter_legal(state, opp_moves, &legals[1]);
+    state->side ^= 1;
+
+    score       += MOBILITY_WEIGHT *
+             (( double )legals[0].count - ( double )legals[1].count);
+
+    return score;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //                                  Test //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef BB_TEST
+#ifdef _BB_TEST
 #include <ndjin/fen.h>
 
 int main(int argc, char **argv)
@@ -1626,6 +1755,11 @@ int main(int argc, char **argv)
     //     printf("%lluULL, \t\t%lluULL\n", mask_pawn_attacks(i, black),
     //            mask_pawn_attacks(i + 1, black));
     // }
+    // for (int i = 0; i < 64; ++i) {
+    //     printf("%lluULL    \t\t", find_magic(i, rook_bits[i], rook));
+    //     if ((i + 1) % 2 == 0)
+    //         puts("");
+    // }
 
     init_all();
 
@@ -1635,7 +1769,7 @@ int main(int argc, char **argv)
     puts("");
 
     struct move_list_t moves[1] = {0};
-    generate_moves(moves);
+    generate_moves(&game_state, moves);
     print_move_list(moves, 1);
 
     struct state_t backup_state = {0};
@@ -1660,6 +1794,116 @@ int main(int argc, char **argv)
 
     return 0;
 }
-#endif /* BB_TEST */
+#endif /* _BB_TEST */
+
+#ifdef _PERFT_TEST
+
+#include "perft.h"
+
+extern struct perft_t initial_position[14];
+extern struct perft_t position_two[6];
+extern struct perft_t position_three[8];
+
+#define PERFT_ONE "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+#define PERFT_TWO                                                              \
+    "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"
+#define PERFT_THREE "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
+
+long nodes;
+
+static inline void perft_driver(struct state_t *state, int depth)
+{
+    if (depth == 0) {
+        ++nodes;
+        return;
+    }
+
+    struct move_list_t moves[1] = {0};
+    generate_moves(state, moves);
+
+    for (int i = 0; i < 64; ++i) {
+        for (int j = 0; j < moves->squares[i].count; ++j) {
+            struct state_t backup = {0};
+            BOARD_BACKUP(state, &backup);
+            if (make_move(state, moves->squares[i].moves[j], all_moves) == 1)
+                perft_driver(state, depth - 1);
+            BOARD_RESTORE(&backup, state);
+        }
+    }
+}
+
+#include <stdio.h>
+
+#include "fen.h"
+
+int main(int argc, char **argv)
+{
+    init_all();
+    struct state_t state = {0};
+    for (int i = 0; i < 7 /* 14 */; ++i) {
+        nodes = 0;
+        // moves      = 0;
+        // eps        = 0;
+        // captures   = 0;
+        // promotions = 0;
+        // castles    = 0;
+        parse_fen(PERFT_ONE, &state);
+        int start = get_time_ms();
+        perft_driver(&state, initial_position[i].depth);
+        int end = get_time_ms() - start;
+        printf("PERFT: POS1[%d] (%dms)\tDepth: %d\tNodes: %ld\t\tExpected: "
+               "%lld \t(%llu)\n",
+               i, end, initial_position[i].depth, nodes,
+               initial_position[i].nodes, nodes - initial_position[i].nodes);
+        // printf("\t->Moves: %llu\tCaptures: %llu\tE.Ps: %llu\tCastles: "
+        //        "%llu\tPromotions: %llu\n",
+        //        moves, captures, eps, castles, promotions);
+    }
+    puts("");
+    memset(&state, 0, sizeof(struct state_t));
+    for (int i = 0; i < 5 /* 6 */; ++i) {
+        nodes = 0;
+        // moves      = 0;
+        // eps        = 0;
+        // captures   = 0;
+        // promotions = 0;
+        // castles    = 0;
+        parse_fen(PERFT_TWO, &state);
+        int start = get_time_ms();
+        perft_driver(&state, position_two[i].depth);
+        int end = get_time_ms() - start;
+        printf("PERFT: POS2[%d] (%dms)\tDepth: %d\tNodes: %ld\t\tExpected: "
+               "%lld \t(%llu)\n",
+               i, end, position_two[i].depth, nodes, position_two[i].nodes,
+               nodes - position_two[i].nodes);
+        // printf("\t->Moves: %llu\tCaptures: %llu\tE.Ps: %llu\tCastles: "
+        //        "%llu\tPromotions: %llu\n",
+        //        moves, captures, eps, castles, promotions);
+    }
+    puts("");
+    memset(&state, 0, sizeof(struct state_t));
+    for (int i = 0; i < 6 /* 8 */; ++i) {
+        nodes = 0;
+        // moves      = 0;
+        // eps        = 0;
+        // captures   = 0;
+        // promotions = 0;
+        // castles    = 0;
+        parse_fen(PERFT_THREE, &state);
+        int start = get_time_ms();
+        perft_driver(&state, position_three[i].depth);
+        int end = get_time_ms() - start;
+        printf("PERFT: POS3[%d] (%dms)\tDepth: %d\tNodes: %ld\t\tExpected: "
+               "%lld \t(%llu)\n",
+               i, end, position_three[i].depth, nodes, position_three[i].nodes,
+               nodes - position_three[i].nodes);
+        // printf("\t->Moves: %llu\tCaptures: %llu\tE.Ps: %llu\tCastles: "
+        //        "%llu\tPromotions: %llu\n",
+        //        moves, captures, eps, castles, promotions);
+    }
+    return 0;
+}
+
+#endif /* _PERFT_TEST */
 
 /* vim: ft=c ts=4 sts=4 sw=4 ai et cin */

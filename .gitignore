@@ -2,5 +2,8 @@
 .cache/
 chess
 test
+fen_test
+bb_test
+perft
 *.o
 *.d

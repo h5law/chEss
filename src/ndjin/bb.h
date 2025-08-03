@@ -33,7 +33,7 @@
 
 #include "types.h"
 
-static inline int get_time_ms(void);
+int get_time_ms(void);
 
 static inline void print_tiles(void);
 static inline void print_bitboard(u64 bitboard);
@@ -53,9 +53,9 @@ static inline u64 get_bishop_attacks(int square, u64 position);
 static inline u64 get_rook_attacks(int square, u64 position);
 static inline u64 get_queen_attacks(int square, u64 position);
 
-inline int  get_attacked(struct state_t *state, int square, int side);
-int         make_move(struct state_t *state, unsigned int move, int move_flag);
-inline void generate_moves(struct move_list_t *list);
+inline int get_attacked(struct state_t *state, int square, int side);
+int        make_move(struct state_t *state, unsigned int move, int move_flag);
+void       generate_moves(struct state_t *state, struct move_list_t *list);
 
 void               init_all(void);
 static inline void init_slider_attacks(int piece);
@@ -68,6 +68,20 @@ static inline u64 set_positions(int idx, int mask_bit_count, u64 attack_mask);
 static inline u64 xorshift64(void);
 static inline u64 rand_u64(void);
 static inline u64 find_magic(int square, int m, int piece);
+
+#define KING_WEIGHT     ( double )200.0
+#define QUEEN_WEIGHT    ( double )9.0
+#define ROOK_WEIGHT     ( double )5.0
+#define BISHOP_WEIGHT   ( double )3.0
+#define KNIGHT_WEIGHT   ( double )3.0
+#define PAWN_WEIGHT     ( double )1.0
+#define BAD_PAWN_WEIGHT ( double )-0.5 // TODO: Implement bad pawn finder
+#define MOBILITY_WEIGHT ( double )0.1
+
+void   filter_legal(struct state_t *state, struct move_list_t *moves,
+                    struct move_list_t *legal);
+double material_count(struct state_t *state);
+double symmetric_eval(struct state_t *state, struct move_list_t *moves);
 
 #endif /* BITBOARD_H */
 

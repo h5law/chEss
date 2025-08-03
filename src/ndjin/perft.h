@@ -1,4 +1,4 @@
-/* eval.h
+/* perft.h
  * Copyright 2025 h5law <dev@h5law.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,25 +28,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef EVAL_H
-#define EVAL_H
+#ifndef PERFT_H
+#define PERFT_H
 
 #include "types.h"
 
-#define KING_WEIGHT     ( double )200.0
-#define QUEEN_WEIGHT    ( double )9.0
-#define ROOK_WEIGHT     ( double )5.0
-#define BISHOP_WEIGHT   ( double )3.0
-#define KNIGHT_WEIGHT   ( double )3.0
-#define PAWN_WEIGHT     ( double )1.0
-#define BAD_PAWN_WEIGHT ( double )-0.5 // TODO: Implement bad pawn finder
-#define MOBILITY_WEIGHT ( double )0.1
+struct perft_t {
+    int depth;
+    u64 nodes;
+    u64 captures;
+    u64 ep;
+    u64 castles;
+    u64 promotions;
+    u64 checks;
+    u64 discovers;
+    u64 double_checks;
+    u64 checkmates;
+};
 
-void   filter_legal(struct state_t *state, struct move_list_t *moves,
-                    struct move_list_t *legal);
-double material_count(struct state_t *state);
-double symmetric_eval(struct state_t *state, struct move_list_t *moves);
-
-#endif /* EVAL_H */
+#endif /* PERFT_H */
 
 /* vim: ft=c ts=4 sts=4 sw=4 ai et cin */
