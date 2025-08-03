@@ -1083,11 +1083,11 @@ const int castling_rights[64] = {
 };
 /* clang-format on */
 
-int make_move(unsigned int move, int move_flag)
+int make_move(struct state_t *state, unsigned int move, int move_flag)
 {
     struct state_t backup_state = {0};
     if (move_flag == all_moves) {
-        BOARD_BACKUP(&game_state, &backup_state);
+        BOARD_BACKUP(state, &backup_state);
 
         int source, target, piece, promo;
         DECODE_MOVE(move, &source, &target, &piece, &promo);
@@ -1096,14 +1096,14 @@ int make_move(unsigned int move, int move_flag)
         int epass    = MOVE_PASSANT_FLAG(move) ? 1 : 0;
         int castling = MOVE_CASTLE_FLAG(move) ? 1 : 0;
 
-        pop_bit(game_state.bitboards[piece], source);
-        set_bit(game_state.bitboards[piece], target);
-        pop_bit(game_state.positions[game_state.side], source);
-        set_bit(game_state.positions[game_state.side], target);
+        pop_bit(state->bitboards[piece], source);
+        set_bit(state->bitboards[piece], target);
+        pop_bit(state->positions[state->side], source);
+        set_bit(state->positions[state->side], target);
 
         if (capture) {
             int start_piece, end_piece;
-            if (game_state.side == white) {
+            if (state->side == white) {
                 start_piece = p;
                 end_piece   = k;
             } else {
@@ -1111,97 +1111,95 @@ int make_move(unsigned int move, int move_flag)
                 end_piece   = K;
             }
             for (int i = start_piece; i <= end_piece; ++i) {
-                if (get_bit(game_state.bitboards[i], target)) {
-                    pop_bit(game_state.bitboards[i], target);
-                    pop_bit(game_state.positions[1 - game_state.side], target);
+                if (get_bit(state->bitboards[i], target)) {
+                    pop_bit(state->bitboards[i], target);
+                    pop_bit(state->positions[1 - state->side], target);
                     break;
                 }
             }
         }
 
         if (promo > piece) {
-            pop_bit(game_state.bitboards[piece], target);
-            set_bit(game_state.bitboards[promo], target);
+            pop_bit(state->bitboards[piece], target);
+            set_bit(state->bitboards[promo], target);
         }
 
         if (epass) {
-            if (game_state.side == white) {
-                pop_bit(game_state.bitboards[p], target - 8);
-                pop_bit(game_state.positions[black], target - 8);
+            if (state->side == white) {
+                pop_bit(state->bitboards[p], target - 8);
+                pop_bit(state->positions[black], target - 8);
             } else {
-                pop_bit(game_state.bitboards[p], target + 8);
-                pop_bit(game_state.positions[white], target + 8);
+                pop_bit(state->bitboards[p], target + 8);
+                pop_bit(state->positions[white], target + 8);
             }
         }
-        game_state.enpassant = no_sq;
+        state->enpassant = no_sq;
 
         if (dpush) {
-            if (game_state.side == white)
-                game_state.enpassant = target - 8;
+            if (state->side == white)
+                state->enpassant = target - 8;
             else
-                game_state.enpassant = target + 8;
+                state->enpassant = target + 8;
         }
 
         if (castling) {
             switch (target) {
             case g1:
-                pop_bit(game_state.bitboards[R], h1);
-                set_bit(game_state.bitboards[R], f1);
-                pop_bit(game_state.positions[white], h1);
-                set_bit(game_state.positions[white], f1);
+                pop_bit(state->bitboards[R], h1);
+                set_bit(state->bitboards[R], f1);
+                pop_bit(state->positions[white], h1);
+                set_bit(state->positions[white], f1);
                 break;
             case c1:
-                pop_bit(game_state.bitboards[R], a1);
-                set_bit(game_state.bitboards[R], d1);
-                pop_bit(game_state.positions[white], a1);
-                set_bit(game_state.positions[white], d1);
+                pop_bit(state->bitboards[R], a1);
+                set_bit(state->bitboards[R], d1);
+                pop_bit(state->positions[white], a1);
+                set_bit(state->positions[white], d1);
                 break;
             case g8:
-                pop_bit(game_state.bitboards[r], h8);
-                set_bit(game_state.bitboards[r], f8);
-                pop_bit(game_state.positions[black], h8);
-                set_bit(game_state.positions[black], f8);
+                pop_bit(state->bitboards[r], h8);
+                set_bit(state->bitboards[r], f8);
+                pop_bit(state->positions[black], h8);
+                set_bit(state->positions[black], f8);
                 break;
             case c8:
-                pop_bit(game_state.bitboards[r], a8);
-                set_bit(game_state.bitboards[r], d8);
-                pop_bit(game_state.positions[black], a8);
-                set_bit(game_state.positions[black], d8);
+                pop_bit(state->bitboards[r], a8);
+                set_bit(state->bitboards[r], d8);
+                pop_bit(state->positions[black], a8);
+                set_bit(state->positions[black], d8);
                 break;
             }
         }
-        game_state.castle          &= castling_rights[source];
-        game_state.castle          &= castling_rights[target];
+        state->castle &= castling_rights[source];
+        state->castle &= castling_rights[target];
 
-        game_state.positions[both]  = 0ULL | game_state.positions[white] |
-                                     game_state.positions[black];
+        state->positions[both] =
+                0ULL | state->positions[white] | state->positions[black];
 
-        game_state.side ^= 1;
+        state->side ^= 1;
 
-        if (get_attacked(&game_state,
-                         get_lsb_index((game_state.side == white
-                                                ? game_state.bitboards[k]
-                                                : game_state.bitboards[K])),
-                         game_state.side)) {
-            BOARD_RESTORE(&backup_state, &game_state);
+        if (get_attacked(
+                    &game_state,
+                    get_lsb_index((state->side == white ? state->bitboards[k]
+                                                        : state->bitboards[K])),
+                    state->side)) {
+            BOARD_RESTORE(&backup_state, state);
             return 0;
-        } else if (get_attacked(
-                           &game_state,
-                           get_lsb_index((game_state.side == white
-                                                  ? game_state.bitboards[K]
-                                                  : game_state.bitboards[k])),
-                           1 - game_state.side)) {
-            game_state.check =
-                    (game_state.side == white) ? white_check : black_check;
+        } else if (get_attacked(&game_state,
+                                get_lsb_index((state->side == white
+                                                       ? state->bitboards[K]
+                                                       : state->bitboards[k])),
+                                state->side ^ 1)) {
+            state->check = (state->side == white) ? white_check : black_check;
         } else
-            game_state.check = no_check;
+            state->check = no_check;
 
-        ++game_state.fullmoves;
+        ++state->fullmoves;
 
         return 1;
     } else {
         if (MOVE_CAPTURE_FLAG(move))
-            make_move(move, all_moves);
+            make_move(state, move, all_moves);
         else
             return 0;
     }
@@ -1650,7 +1648,7 @@ int main(int argc, char **argv)
             // print_bitboard(positions[black]);
             // print_bitboard(positions[both]);
             getchar();
-            make_move(moves->squares[i].moves[j], all_moves);
+            make_move(&game_state, moves->squares[i].moves[j], all_moves);
             print_board(1);
             // print_bitboard(positions[white]);
             // print_bitboard(positions[black]);

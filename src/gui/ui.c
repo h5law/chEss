@@ -28,12 +28,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <raylib.h>
 
 #include <ndjin/bb.h>
+#include <ndjin/eval.h>
 #include <ndjin/types.h>
 
 #include "ui.h"
@@ -59,40 +61,40 @@ struct square_t      *original_sqr   = NULL;
 void load_assets(void)
 {
     Image img;
-    img = LoadImage("../assets/wp.png");
+    img = LoadImage("assets/wp.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     wp  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/bp.png");
+    img = LoadImage("assets/bp.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     bp  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/wb.png");
+    img = LoadImage("assets/wb.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     wb  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/bb.png");
+    img = LoadImage("assets/bb.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     bb  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/wn.png");
+    img = LoadImage("assets/wn.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     wn  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/bn.png");
+    img = LoadImage("assets/bn.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     bn  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/wr.png");
+    img = LoadImage("assets/wr.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     wr  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/br.png");
+    img = LoadImage("assets/br.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     br  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/wq.png");
+    img = LoadImage("assets/wq.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     wq  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/bq.png");
+    img = LoadImage("assets/bq.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     bq  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/wk.png");
+    img = LoadImage("assets/wk.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     wk  = LoadTextureFromImage(img);
-    img = LoadImage("../assets/bk.png");
+    img = LoadImage("assets/bk.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     bk = LoadTextureFromImage(img);
 }
@@ -209,15 +211,11 @@ int draw_bitboard(u64 bitboard, int piece, int check)
                 sprite = wk;
                 if (check == white_check)
                     DrawRectangle(x, y, 70, 70, RED);
-                else if (moves.count == 0 && black_check)
-                    DrawRectangle(x, y, 70, 70, GREEN);
                 break;
             case k:
                 sprite = bk;
                 if (check == black_check)
                     DrawRectangle(x, y, 70, 70, RED);
-                else if (moves.count == 0 && white_check)
-                    DrawRectangle(x, y, 70, 70, GREEN);
                 break;
             }
             Rectangle rect = {0, 0, 70, 70};
@@ -268,7 +266,7 @@ int update_input()
                 DECODE_MOVE(possibles.moves[i], &source, &target, &piece,
                             &promo);
                 if (target == sq.square) {
-                    make_move(possibles.moves[i], all_moves);
+                    make_move(&game_state, possibles.moves[i], all_moves);
                     original_sqr = NULL;
                     break;
                 }
@@ -307,6 +305,13 @@ int draw(void)
 
     u64 nstate, pstate = game_state.positions[2];
     generate_moves(&moves);
+
+    char buf3[6]  = {'C', 'H', 'E', 'C', 'K', '\0'};
+    char buf4[10] = {'C', 'H', 'E', 'C', 'K', 'M', 'A', 'T', 'E', '\0'};
+    char buf5[10] = {'W', 'I', 'N', 'N', 'E', 'R', '\0'};
+    char buf6[16] = {0};
+    char buf7[16] = {0};
+
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(DARKBROWN);
@@ -341,24 +346,21 @@ int draw(void)
 
         char buf1[11] = {'B', 'L', 'A', 'C', 'K', ' ', '[', bs, ']', '\0'};
         char buf2[11] = {'[', ws, ']', ' ', 'W', 'H', 'I', 'T', 'E', '\0'};
+
         DrawText(buf1, 10, 10, 20, LIGHTGRAY);
         DrawText(buf2, 450, 610, 20, LIGHTGRAY);
-        char buf3[6]  = {'C', 'H', 'E', 'C', 'K', '\0'};
-        char buf4[10] = {'C', 'H', 'E', 'C', 'K', 'M', 'A', 'T', 'E', '\0'};
-        char buf5[10] = {'W', 'I', 'N', 'N', 'E', 'R', '\0'};
         if (game_state.check == white_check)
             DrawText(buf3, 10, 610, 20, LIGHTGRAY);
         else if (game_state.check == black_check)
             DrawText(buf3, 480, 10, 20, LIGHTGRAY);
-        else if (moves.count == 0) {
-            if (game_state.check == white_check) {
-                DrawText(buf4, 10, 610, 20, LIGHTGRAY);
-                DrawText(buf5, 470, 610, 20, LIGHTGRAY);
-            } else if (game_state.check == black_check) {
-                DrawText(buf4, 450, 10, 20, LIGHTGRAY);
-                DrawText(buf5, 10, 610, 20, LIGHTGRAY);
-            }
-        }
+
+        double eval = symmetric_eval(&game_state, &moves);
+        if (game_state.side == white)
+            snprintf(buf6, 16, "%02f", eval);
+        else
+            snprintf(buf7, 16, "%02f", eval);
+        DrawText(buf6, 230, 610, 20, LIGHTGRAY);
+        DrawText(buf7, 230, 10, 20, LIGHTGRAY);
 
         EndDrawing();
     }

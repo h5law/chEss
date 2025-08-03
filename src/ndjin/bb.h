@@ -54,7 +54,7 @@ static inline u64 get_rook_attacks(int square, u64 position);
 static inline u64 get_queen_attacks(int square, u64 position);
 
 inline int  get_attacked(struct state_t *state, int square, int side);
-int         make_move(unsigned int move, int move_flag);
+int         make_move(struct state_t *state, unsigned int move, int move_flag);
 inline void generate_moves(struct move_list_t *list);
 
 void               init_all(void);

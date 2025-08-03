@@ -1,25 +1,27 @@
 MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 
 DIAG = -Wall -Wextra -Wpedantic
-OFLAGS = -O2
+OFLAGS = -Ofast
 
 CC := gcc
-INCS := -I/usr/local/include
-LIBS := -L/usr/local/lib64 -lraylib -lm
+INCS := -Indjin
+LIBS := -lm
 CFLAGS := $(OFLAGS) $(DIAG) $(INCS) -MD -g
 LDFLAGS := $(LDFLAGS) $(LIBS)
 
-SRCDIR := src
-
 OBJS = \
-	$(SRCDIR)/main.o \
-	$(SRCDIR)/dsa.o \
-	$(SRCDIR)/board.o \
-	$(SRCDIR)/ui.o \
-	$(SRCDIR)/players.o \
-	$(SRCDIR)/moves.o
+	src/ndjin/types.o \
+	src/ndjin/fen.o \
+	src/ndjin/bb.o \
+	src/ndjin/eval.o
 
-TARGET = ndjin
+GUI_OBJS = \
+	src/gui/ui.o \
+	src/gui/main.o
+
+TEST = test
+
+GUI = chess
 
 .PHONY: all build clean demo
 
@@ -28,17 +30,18 @@ all: clean build demo
 clean:
 	rm -f $(OBJS) *.o */*.o */*/*.o
 	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
-
-%.o: %.S
-	$(CC) $(CFLAGS) -o $@ -c $<
+	rm -f $(TEST) $(GUI)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
+$(TEST): $(OBJS)
+	$(CC) $(CFLAGS) -o $(TEST) $(OBJS) $(LDFLAGS)
 
-build: $(TARGET)
+$(GUI): $(OBJS) $(GUI_OBJS)
+	$(CC) $(CFLAGS) -o $(GUI) $(OBJS) $(GUI_OBJS) $(LDFLAGS) -lraylib
+
+build: $(OBJS) $(GUI_OBJS) $(GUI)
 
 demo: clean build
-	./$(TARGET)
+	./$(GUI)

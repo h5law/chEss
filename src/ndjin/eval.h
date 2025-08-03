@@ -1,4 +1,4 @@
-/* ui.h
+/* eval.h
  * Copyright 2025 h5law <dev@h5law.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,18 +28,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef UI_H
-#define UI_H
+#ifndef EVAL_H
+#define EVAL_H
 
-#include <ndjin/types.h>
+#include "types.h"
 
-void load_assets(void);
-void draw_squares(void);
-int  draw_bitboard(u64 bitboard, int piece, int check);
-void draw_piece(int piece, float x, float y);
-void draw_piece_middle(int piece, float x, float y);
-int  draw(void);
+#define KING_WEIGHT     ( double )200.0
+#define QUEEN_WEIGHT    ( double )9.0
+#define ROOK_WEIGHT     ( double )5.0
+#define BISHOP_WEIGHT   ( double )3.0
+#define KNIGHT_WEIGHT   ( double )3.0
+#define PAWN_WEIGHT     ( double )1.0
+#define BAD_PAWN_WEIGHT ( double )-0.5 // TODO: Implement bad pawn finder
+#define MOBILITY_WEIGHT ( double )0.1
 
-#endif /* UI_H */
+void   filter_legal(struct state_t *state, struct move_list_t *moves,
+                    struct move_list_t *legal);
+double material_count(struct state_t *state);
+double symmetric_eval(struct state_t *state, struct move_list_t *moves);
+
+#endif /* EVAL_H */
 
 /* vim: ft=c ts=4 sts=4 sw=4 ai et cin */
