@@ -16,8 +16,9 @@ OBJS = \
 	src/ndjin/types.o
 
 GUI_OBJS = \
-	src/gui/ui.o \
-	src/gui/main.o
+	src/gui/game.o \
+	src/gui/main.o \
+	src/gui/pre.o
 
 BB = bb_test
 
@@ -43,10 +44,10 @@ $(TEST): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TEST) $(OBJS) $(LDFLAGS)
 
 $(GUI): $(OBJS) $(GUI_OBJS)
-	$(CC) $(CFLAGS) -o $(GUI) $(OBJS) $(GUI_OBJS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -Isrc/gui -o $(GUI) $(OBJS) $(GUI_OBJS) $(LDFLAGS) -lraylib
 
 $(PERFT):
-	$(CC) -Ofast -Isrc/ndjin -D_PERFT_TEST -o $(PERFT) $(wildcard src/ndjin/*.c) -lm
+	$(CC) -Ofast -Isrc/ndjin -D_PERFT_TEST -DNO_DEBUG=1 -o $(PERFT) $(wildcard src/ndjin/*.c) -lm
 	./$(PERFT)
 
 $(BB):

@@ -1,4 +1,4 @@
-/* pre.h
+/* state.h
  * Copyright 2025 h5law <dev@h5law.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,18 +28,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PRE_H
-#define PRE_H
+#ifndef STATE_H
+#define STATE_H
 
-void title_box(const char *text, int xoff);
-int  draw_tb_buttons(const char *top, const char *bottom);
-int  splash_screen(void);
+struct game_t {
+    unsigned int code   : 12;
 
-int new_game_screen(void);
+    /* 0 1 - player 1 white
+     * 1 0 - player 2 white
+     */
+    unsigned int white  : 2;
 
-int  join_game_screen(void);
-void game_code_entry(char buf[13]);
+    /* 0 1 - player 1
+     * 1 0 - player 2
+     */
+    unsigned int player : 2;
 
-#endif /* PRE_H */
+    struct state_t *game_state;
+
+    /* 0000 0000 0000 0000 0011 1111 - source
+     * 0000 0000 0000 1111 1100 0000 - target
+     * 0000 0000 1111 0000 0000 0000 - piece
+     * 0000 1111 0000 0000 0000 0000 - promotion piece
+     * 0001 0000 0000 0000 0000 0000 - capture
+     * 0010 0000 0000 0000 0000 0000 - double
+     * 0100 0000 0000 0000 0000 0000 - e.p
+     * 1000 0000 0000 0000 0000 0000 - castle
+     */
+    unsigned int last_move;
+};
+
+#endif /* STATE_H */
 
 /* vim: ft=c ts=4 sts=4 sw=4 ai et cin */

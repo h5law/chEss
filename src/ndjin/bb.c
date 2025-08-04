@@ -35,6 +35,17 @@
 #include "types.h"
 #include "bb.h"
 
+#ifndef NO_DEBUG
+#define DEBUG(...)                                                             \
+    do {                                                                       \
+        fprintf(stderr, "%d: %s    ", __LINE__, __FILE__);                     \
+        fprintf(stderr, __VA_ARGS__);                                          \
+    } while (0);
+#else
+#define NO_DEBUG 1
+#define DEBUG(...)
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 //                                 Extern                                     //
 ////////////////////////////////////////////////////////////////////////////////
@@ -147,8 +158,6 @@ extern const char  piece_char[];
  *
  */
 
-struct state_t game_state;
-
 ////////////////////////////////////////////////////////////////////////////////
 //                                   Time                                     //
 ////////////////////////////////////////////////////////////////////////////////
@@ -223,14 +232,14 @@ static inline void print_bitboard(u64 bitboard)
            count_bits(bitboard));
 }
 
-static inline void print_attacked(int side)
+static inline void print_attacked(struct state_t *state, int side)
 {
     for (int i = 7; i >= 0; --i) {
         for (int j = 0; j < 8; ++j) {
             int sq = (i * 8) + j;
             if (!j)
                 printf("  %d ", i + 1);
-            printf(" %d", get_attacked(&game_state, sq, side) ? 1 : 0);
+            printf(" %d", get_attacked(state, sq, side) ? 1 : 0);
         }
         puts("");
     }
@@ -238,14 +247,14 @@ static inline void print_attacked(int side)
     printf("Attacked by:\t%s\n", (side == white ? "white" : "black"));
 }
 
-static inline void print_board(int unicode)
+static inline void print_board(struct state_t *state, int unicode)
 {
     for (int i = 7; i >= 0; --i) {
         for (int j = 0; j < 8; ++j) {
             int sq    = (i * 8) + j;
             int piece = -1;
             for (int k = 0; k < 12; ++k) {
-                if (get_bit(game_state.bitboards[k], sq) > 0)
+                if (get_bit(state->bitboards[k], sq) > 0)
                     piece = k;
             }
             if (!j)
@@ -258,17 +267,16 @@ static inline void print_board(int unicode)
         puts("");
     }
     puts("\n     a b c d e f g h\n");
-    printf("Side:\t\t%s\n", (game_state.side == white ? "white" : "black"));
+    printf("Side:\t\t%s\n", (state->side == white ? "white" : "black"));
     printf("En-passant:\t%s\n",
-           (game_state.enpassant == no_sq
-                    ? "none"
-                    : square_to_coord[game_state.enpassant]));
-    printf("Castling:\t%c%c%c%c\n", (game_state.castle & WKCK) ? 'K' : '.',
-           (game_state.castle & WKCQ) ? 'Q' : '.',
-           (game_state.castle & BKCK) ? 'k' : '.',
-           (game_state.castle & BKCQ) ? 'q' : '.');
-    printf("Half moves:\t%d\n", game_state.ply);
-    printf("Moves:\t\t%d\n", game_state.fullmoves);
+           (state->enpassant == no_sq ? "none"
+                                      : square_to_coord[state->enpassant]));
+    printf("Castling:\t%c%c%c%c\n", (state->castle & WKCK) ? 'K' : '.',
+           (state->castle & WKCQ) ? 'Q' : '.',
+           (state->castle & BKCK) ? 'k' : '.',
+           (state->castle & BKCQ) ? 'q' : '.');
+    printf("Half moves:\t%d\n", state->ply);
+    printf("Moves:\t\t%d\n", state->fullmoves);
 }
 
 static inline void print_move(unsigned int move, int unicode)
@@ -800,17 +808,17 @@ const u64 rook_magics[64] = {
 };
 /* clang-format on */
 
-u64 state[] = {
+u64 seed[] = {
         8392127718274466268ULL,
 };
 
 static inline u64 xorshift64(void)
 {
-    u64 x   = *state;
-    x      ^= x << 13;
-    x      ^= x >> 7;
-    x      ^= x << 17;
-    *state  = x;
+    u64 x  = *seed;
+    x     ^= x << 13;
+    x     ^= x >> 7;
+    x     ^= x << 17;
+    *seed  = x;
     return x;
 }
 
@@ -954,69 +962,69 @@ void init_all(void)
     init_slider_attacks(rook);
 }
 
-void init_board(void)
+void init_board(struct state_t *state)
 {
     for (int i = 0; i < 12; ++i) {
         switch (i) {
         case P: /* Pawn - White */
             for (int j = 0; j < 8; ++j)
-                game_state.bitboards[i] |= (1ULL << ((1 * 8) + j));
+                state->bitboards[i] |= (1ULL << ((1 * 8) + j));
             break;
         case N: /* Knight - White */
-            game_state.bitboards[i] = (1ULL << 1) | (1ULL << 6);
+            state->bitboards[i] = (1ULL << 1) | (1ULL << 6);
             break;
         case B: /* Bishops - White */
-            game_state.bitboards[i] = (1ULL << 2) | (1ULL << 5);
+            state->bitboards[i] = (1ULL << 2) | (1ULL << 5);
             break;
         case R: /* Rooks - White */
-            game_state.bitboards[i] = (1ULL << 0) | (1ULL << 7);
+            state->bitboards[i] = (1ULL << 0) | (1ULL << 7);
             break;
         case Q: /* Queen - White */
-            game_state.bitboards[i] = (1ULL << 3);
+            state->bitboards[i] = (1ULL << 3);
             break;
         case K: /* King - White */
-            game_state.bitboards[i] = (1ULL << 4);
+            state->bitboards[i] = (1ULL << 4);
             break;
         case p: /* Pawn - Black */
             for (int j = 0; j < 8; ++j)
-                game_state.bitboards[i] |= (1ULL << ((6 * 8) + j));
+                state->bitboards[i] |= (1ULL << ((6 * 8) + j));
             break;
         case n: /* Knight - Black */
-            game_state.bitboards[i] =
+            state->bitboards[i] =
                     (1ULL << ((7 * 8) + 1)) | (1ULL << ((7 * 8) + 6));
             break;
         case b: /* Bishops - Black */
-            game_state.bitboards[i] =
+            state->bitboards[i] =
                     (1ULL << ((7 * 8) + 2)) | (1ULL << ((7 * 8) + 5));
             break;
         case r: /* Rooks - Black */
-            game_state.bitboards[i] =
+            state->bitboards[i] =
                     (1ULL << ((7 * 8) + 0)) | (1ULL << ((7 * 8) + 7));
             break;
         case q: /* Queen - Black */
-            game_state.bitboards[i] = (1ULL << ((7 * 8) + 3));
+            state->bitboards[i] = (1ULL << ((7 * 8) + 3));
             break;
         case k: /* King - Black */
-            game_state.bitboards[i] = (1ULL << ((7 * 8) + 4));
+            state->bitboards[i] = (1ULL << ((7 * 8) + 4));
             break;
         }
     }
 
-    game_state.side             = white;
+    state->side             = white;
 
-    game_state.positions[white] = 0x000000000000FFFFULL;
-    game_state.positions[black] = 0xFFFF000000000000ULL;
-    game_state.positions[both]  = 0xFFFF00000000FFFFULL;
+    state->positions[white] = 0x000000000000FFFFULL;
+    state->positions[black] = 0xFFFF000000000000ULL;
+    state->positions[both]  = 0xFFFF00000000FFFFULL;
 
-    game_state.enpassant        = no_sq;
+    state->enpassant        = no_sq;
 
-    game_state.castle           = WKCK | WKCQ | BKCK | BKCQ;
+    state->castle           = WKCK | WKCQ | BKCK | BKCQ;
 
-    game_state.ply              = 0;
+    state->ply              = 0;
 
-    game_state.fifty            = 0;
+    state->fifty            = 0;
 
-    game_state.fullmoves        = 1;
+    state->fullmoves        = 1;
 
     return;
 }
@@ -1093,14 +1101,31 @@ int make_move(struct state_t *state, unsigned int move, int move_flag)
 {
     struct state_t backup_state = {0};
     if (move_flag == all_moves) {
+        // DEBUG("make_move(): backing up state\n");
         BOARD_BACKUP(state, &backup_state);
 
         int source, target, piece, promo;
+        // DEBUG("make_move(): decoding move\n");
         DECODE_MOVE(move, &source, &target, &piece, &promo);
         int capture  = MOVE_CAPTURE_FLAG(move) ? 1 : 0;
         int dpush    = MOVE_DOUBLE_FLAG(move) ? 1 : 0;
         int epass    = MOVE_PASSANT_FLAG(move) ? 1 : 0;
         int castling = MOVE_CASTLE_FLAG(move) ? 1 : 0;
+        DEBUG("make_move(): move -> %s to %s (%s promo %s) - %s %s %s %s\n",
+              square_to_coord[source], square_to_coord[target],
+              unicode_pieces[piece], unicode_pieces[promo],
+              (capture ? "capture" : "-"), (capture ? "dpush" : "-"),
+              (capture ? "e.p" : "-"), (capture ? "castling" : "-"));
+
+        if (piece > k || piece < P) {
+            DEBUG("make_move(): decoded piece invalid got: %d\n", piece);
+            BOARD_RESTORE(&backup_state, state);
+        }
+        if (promo > k || promo < P) {
+            DEBUG("make_move(): decoded promotion piece invalid got: %d\n",
+                  promo);
+            BOARD_RESTORE(&backup_state, state);
+        }
 
         pop_bit(state->bitboards[piece], source);
         set_bit(state->bitboards[piece], target);
@@ -1108,6 +1133,8 @@ int make_move(struct state_t *state, unsigned int move, int move_flag)
         set_bit(state->positions[state->side], target);
 
         if (capture) {
+            DEBUG("make_move(): capture move %s %s\n", square_to_coord[source],
+                  square_to_coord[target]);
             int start_piece, end_piece;
             if (state->side == white) {
                 start_piece = p;
@@ -1119,22 +1146,32 @@ int make_move(struct state_t *state, unsigned int move, int move_flag)
             for (int i = start_piece; i <= end_piece; ++i) {
                 if (get_bit(state->bitboards[i], target)) {
                     pop_bit(state->bitboards[i], target);
-                    pop_bit(state->positions[state->side ^ 1], target);
+                    DEBUG("make_move(): captured %s (popping position board "
+                          "%d : side %d)\n",
+                          square_to_coord[target], (6 - start_piece) / 6,
+                          state->side);
+                    pop_bit(state->positions[(6 - start_piece) / 6], target);
                     break;
                 }
             }
         }
 
         if (promo > piece) {
+            DEBUG("make_move(): promoting piece from %s to %s\n",
+                  unicode_pieces[piece], unicode_pieces[promo]);
             pop_bit(state->bitboards[piece], target);
             set_bit(state->bitboards[promo], target);
         }
 
         if (epass) {
             if (state->side == white) {
+                DEBUG("make_move(): en-passant capture on %s\n",
+                      square_to_coord[target - 8]);
                 pop_bit(state->bitboards[p], target - 8);
                 pop_bit(state->positions[black], target - 8);
             } else {
+                DEBUG("make_move(): en-passant capture on %s\n",
+                      square_to_coord[target + 8]);
                 pop_bit(state->bitboards[P], target + 8);
                 pop_bit(state->positions[white], target + 8);
             }
@@ -1151,24 +1188,28 @@ int make_move(struct state_t *state, unsigned int move, int move_flag)
         if (castling) {
             switch (target) {
             case g1:
+                DEBUG("make_move(): white castles kingside\n");
                 pop_bit(state->bitboards[R], h1);
                 set_bit(state->bitboards[R], f1);
                 pop_bit(state->positions[white], h1);
                 set_bit(state->positions[white], f1);
                 break;
             case c1:
+                DEBUG("make_move(): white castles queenside\n");
                 pop_bit(state->bitboards[R], a1);
                 set_bit(state->bitboards[R], d1);
                 pop_bit(state->positions[white], a1);
                 set_bit(state->positions[white], d1);
                 break;
             case g8:
+                DEBUG("make_move(): black castles kingside\n");
                 pop_bit(state->bitboards[r], h8);
                 set_bit(state->bitboards[r], f8);
                 pop_bit(state->positions[black], h8);
                 set_bit(state->positions[black], f8);
                 break;
             case c8:
+                DEBUG("make_move(): black castles queenside\n");
                 pop_bit(state->bitboards[r], a8);
                 set_bit(state->bitboards[r], d8);
                 pop_bit(state->positions[black], a8);
@@ -1182,23 +1223,14 @@ int make_move(struct state_t *state, unsigned int move, int move_flag)
         state->positions[both] =
                 0ULL | state->positions[white] | state->positions[black];
 
-        state->side ^= 1;
+        state->side    ^= 1;
 
-        if (get_attacked(
-                    &game_state,
-                    get_lsb_index((state->side == white ? state->bitboards[k]
-                                                        : state->bitboards[K])),
-                    state->side)) {
+        u64 king_board  = state->side == white ? state->bitboards[k]
+                                               : state->bitboards[K];
+        if (get_attacked(state, get_lsb_index(king_board), state->side)) {
             BOARD_RESTORE(&backup_state, state);
             return 0;
-        } else if (get_attacked(&game_state,
-                                get_lsb_index((state->side == white
-                                                       ? state->bitboards[K]
-                                                       : state->bitboards[k])),
-                                state->side ^ 1)) {
-            state->check = (state->side == white) ? white_check : black_check;
-        } else
-            state->check = no_check;
+        }
 
         ++state->fullmoves;
 
@@ -1331,8 +1363,8 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
                 if (state->castle & WKCK) {
                     if (!get_bit(state->positions[both], f1) &&
                         !get_bit(state->positions[both], g1)) {
-                        if (!get_attacked(&game_state, e1, black) &&
-                            !get_attacked(&game_state, f1, black)) {
+                        if (!get_attacked(state, e1, black) &&
+                            !get_attacked(state, f1, black)) {
                             add_move(list, ENCODE_MOVE(e1, g1, piece, piece, 0,
                                                        0, 0, 1));
                             // ++moves;
@@ -1344,8 +1376,8 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
                     if (!get_bit(state->positions[both], d1) &&
                         !get_bit(state->positions[both], c1) &&
                         !get_bit(state->positions[both], b1)) {
-                        if (!get_attacked(&game_state, d1, black) &&
-                            !get_attacked(&game_state, e1, black)) {
+                        if (!get_attacked(state, d1, black) &&
+                            !get_attacked(state, e1, black)) {
                             add_move(list, ENCODE_MOVE(e1, c1, piece, piece, 0,
                                                        0, 0, 1));
                             // ++moves;
@@ -1461,8 +1493,8 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
                 if (state->castle & BKCK) {
                     if (!get_bit(state->positions[both], f8) &&
                         !get_bit(state->positions[both], g8)) {
-                        if (!get_attacked(&game_state, e8, white) &&
-                            !get_attacked(&game_state, f8, white)) {
+                        if (!get_attacked(state, e8, white) &&
+                            !get_attacked(state, f8, white)) {
                             add_move(list, ENCODE_MOVE(e8, g8, piece, piece, 0,
                                                        0, 0, 1));
                             // ++castles;
@@ -1474,8 +1506,8 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
                     if (!get_bit(state->positions[both], d8) &&
                         !get_bit(state->positions[both], c8) &&
                         !get_bit(state->positions[both], b8)) {
-                        if (!get_attacked(&game_state, d8, white) &&
-                            !get_attacked(&game_state, e8, white)) {
+                        if (!get_attacked(state, d8, white) &&
+                            !get_attacked(state, e8, white)) {
                             add_move(list, ENCODE_MOVE(e8, c8, piece, piece, 0,
                                                        0, 0, 1));
                             // ++castles;
@@ -1498,15 +1530,15 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
                     target = get_lsb_index(attacks);
 
                     if ((state->side == white)
-                                ? get_bit(state->positions[black], target)
-                                : get_bit(state->positions[white], target)) {
+                                ? !get_bit(state->positions[black], target)
+                                : !get_bit(state->positions[white], target)) {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
-                                                   1, 0, 0, 0));
+                                                   0, 0, 0, 0));
                         // ++captures;
                         // ++moves;
                     } else {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
-                                                   0, 0, 0, 0));
+                                                   1, 0, 0, 0));
                         // ++moves;
                     }
 
@@ -1529,15 +1561,15 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
                     target = get_lsb_index(attacks);
 
                     if ((state->side == white)
-                                ? get_bit(state->positions[black], target)
-                                : get_bit(state->positions[white], target)) {
+                                ? !get_bit(state->positions[black], target)
+                                : !get_bit(state->positions[white], target)) {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
-                                                   1, 0, 0, 0));
+                                                   0, 0, 0, 0));
                         // ++captures;
                         // ++moves;
                     } else {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
-                                                   0, 0, 0, 0));
+                                                   1, 0, 0, 0));
                         // ++moves;
                     }
 
@@ -1560,15 +1592,15 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
                     target = get_lsb_index(attacks);
 
                     if ((state->side == white)
-                                ? get_bit(state->positions[black], target)
-                                : get_bit(state->positions[white], target)) {
+                                ? !get_bit(state->positions[black], target)
+                                : !get_bit(state->positions[white], target)) {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
-                                                   1, 0, 0, 0));
+                                                   0, 0, 0, 0));
                         // ++captures;
                         // ++moves;
                     } else {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
-                                                   0, 0, 0, 0));
+                                                   1, 0, 0, 0));
                         // ++moves;
                     }
 
@@ -1591,15 +1623,15 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
                     target = get_lsb_index(attacks);
 
                     if ((state->side == white)
-                                ? get_bit(state->positions[black], target)
-                                : get_bit(state->positions[white], target)) {
+                                ? !get_bit(state->positions[black], target)
+                                : !get_bit(state->positions[white], target)) {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
-                                                   1, 0, 0, 0));
+                                                   0, 0, 0, 0));
                         // ++captures;
                         // ++moves;
                     } else {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
-                                                   0, 0, 0, 0));
+                                                   1, 0, 0, 0));
                         // ++moves;
                     }
 
@@ -1622,15 +1654,15 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
                     target = get_lsb_index(attacks);
 
                     if ((state->side == white)
-                                ? get_bit(state->positions[black], target)
-                                : get_bit(state->positions[white], target)) {
+                                ? !get_bit(state->positions[black], target)
+                                : !get_bit(state->positions[white], target)) {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
-                                                   1, 0, 0, 0));
+                                                   0, 0, 0, 0));
                         // ++captures;
                         // ++moves;
                     } else {
                         add_move(list, ENCODE_MOVE(source, target, piece, piece,
-                                                   0, 0, 0, 0));
+                                                   1, 0, 0, 0));
                         // ++moves;
                     }
 
@@ -1646,7 +1678,7 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                                Evaluation                                  //
+//                                Evaluation //
 ////////////////////////////////////////////////////////////////////////////////
 
 double material_eval(struct state_t *state)
@@ -1700,37 +1732,16 @@ double material_eval(struct state_t *state)
 void filter_legal(struct state_t *state, struct move_list_t *moves,
                   struct move_list_t *legal)
 {
-    struct state_t backup = {0};
-    for (int i = 0; i < 64; ++i) {
-        for (int j = 0; j < moves->squares[i].count; ++j) {
-            BOARD_BACKUP(state, &backup);
-            if (make_move(&backup, moves->squares[i].moves[j], all_moves) ==
-                1) {
-                legal->squares[i].moves[legal->squares[i].count++] =
-                        moves->squares[i].moves[j];
-                ++legal->count;
-            }
-        }
-    }
     return;
 }
 
 double symmetric_eval(struct state_t *state, struct move_list_t *moves)
 {
-    double score                     = 0.0;
-    double material                  = material_eval(state);
-    score                           += material;
+    double score     = 0.0;
+    double material  = material_eval(state);
+    score           += material;
 
-    struct move_list_t opp_moves[1]  = {0};
-    struct move_list_t legals[2]     = {0};
-    filter_legal(state, moves, &legals[0]);
-    state->side ^= 1;
-    generate_moves(state, opp_moves);
-    filter_legal(state, opp_moves, &legals[1]);
-    state->side ^= 1;
-
-    score       += MOBILITY_WEIGHT *
-             (( double )legals[0].count - ( double )legals[1].count);
+    score           += MOBILITY_WEIGHT * moves->count;
 
     return score;
 }
@@ -1763,27 +1774,30 @@ int main(int argc, char **argv)
 
     init_all();
 
-    // init_board();
+    struct state_t game_state = {0};
+    // init_board(&game_state);
     parse_fen(STATE3, &game_state);
-    print_board(1);
+    print_board(&game_state, 1);
     puts("");
 
     struct move_list_t moves[1] = {0};
     generate_moves(&game_state, moves);
     print_move_list(moves, 1);
 
+    print_bitboard(knight_attacks[e4]);
+
     struct state_t backup_state = {0};
 
     for (int i = 0; i < 64; ++i) {
         for (int j = 0; j < moves->squares[i].count; ++j) {
             BOARD_BACKUP(&game_state, &backup_state);
-            print_board(1);
+            print_board(&game_state, 1);
             // print_bitboard(positions[white]);
             // print_bitboard(positions[black]);
             // print_bitboard(positions[both]);
             getchar();
             make_move(&game_state, moves->squares[i].moves[j], all_moves);
-            print_board(1);
+            print_board(&game_state, 1);
             // print_bitboard(positions[white]);
             // print_bitboard(positions[black]);
             // print_bitboard(positions[both]);
@@ -1825,7 +1839,7 @@ static inline void perft_driver(struct state_t *state, int depth)
         for (int j = 0; j < moves->squares[i].count; ++j) {
             struct state_t backup = {0};
             BOARD_BACKUP(state, &backup);
-            if (make_move(state, moves->squares[i].moves[j], all_moves) == 1)
+            if (make_move(state, moves->squares[i].moves[j], all_moves) > 0)
                 perft_driver(state, depth - 1);
             BOARD_RESTORE(&backup, state);
         }
@@ -1839,7 +1853,9 @@ static inline void perft_driver(struct state_t *state, int depth)
 int main(int argc, char **argv)
 {
     init_all();
+
     struct state_t state = {0};
+
     for (int i = 0; i < 7 /* 14 */; ++i) {
         nodes = 0;
         // moves      = 0;
@@ -1852,7 +1868,7 @@ int main(int argc, char **argv)
         perft_driver(&state, initial_position[i].depth);
         int end = get_time_ms() - start;
         printf("PERFT: POS1[%d] (%dms)\tDepth: %d\tNodes: %ld\t\tExpected: "
-               "%lld \t(%llu)\n",
+               "%lld \t(%lld)\n",
                i, end, initial_position[i].depth, nodes,
                initial_position[i].nodes, nodes - initial_position[i].nodes);
         // printf("\t->Moves: %llu\tCaptures: %llu\tE.Ps: %llu\tCastles: "
@@ -1873,7 +1889,7 @@ int main(int argc, char **argv)
         perft_driver(&state, position_two[i].depth);
         int end = get_time_ms() - start;
         printf("PERFT: POS2[%d] (%dms)\tDepth: %d\tNodes: %ld\t\tExpected: "
-               "%lld \t(%llu)\n",
+               "%lld \t(%lld)\n",
                i, end, position_two[i].depth, nodes, position_two[i].nodes,
                nodes - position_two[i].nodes);
         // printf("\t->Moves: %llu\tCaptures: %llu\tE.Ps: %llu\tCastles: "
@@ -1894,7 +1910,7 @@ int main(int argc, char **argv)
         perft_driver(&state, position_three[i].depth);
         int end = get_time_ms() - start;
         printf("PERFT: POS3[%d] (%dms)\tDepth: %d\tNodes: %ld\t\tExpected: "
-               "%lld \t(%llu)\n",
+               "%lld \t(%lld)\n",
                i, end, position_three[i].depth, nodes, position_three[i].nodes,
                nodes - position_three[i].nodes);
         // printf("\t->Moves: %llu\tCaptures: %llu\tE.Ps: %llu\tCastles: "

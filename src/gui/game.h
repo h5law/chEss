@@ -1,4 +1,4 @@
-/* ui.h
+/* game.h
  * Copyright 2025 h5law <dev@h5law.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,18 +28,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef UI_H
-#define UI_H
+#ifndef GAME_H
+#define GAME_H
 
-#include <ndjin/types.h>
+#include "state.h"
 
 void load_assets(void);
-void draw_squares(void);
-int  draw_bitboard(u64 bitboard, int piece, int check);
+
+int draw_bitboard(struct game_t *data, unsigned long long bitboard, int piece,
+                  int check);
+
 void draw_piece(int piece, float x, float y);
 void draw_piece_middle(int piece, float x, float y);
-int  draw(void);
 
-#endif /* UI_H */
+void draw_player_bar(struct game_t *data);
+void draw_move_scores(struct game_t *data, struct move_list_t *list);
+
+int update_input(struct game_t *data, struct move_list_t *list);
+
+#endif /* GAME_H */
 
 /* vim: ft=c ts=4 sts=4 sw=4 ai et cin */

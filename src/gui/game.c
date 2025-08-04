@@ -1,4 +1,4 @@
-/* ui.c
+/* game.c
  * Copyright 2025 h5law <dev@h5law.com>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,8 @@
 #include <ndjin/bb.h>
 #include <ndjin/types.h>
 
-#include "ui.h"
+#include "game.h"
+#include "state.h"
 
 extern const char *square_to_coord[64];
 extern const char  ascii_pieces[13];
@@ -46,15 +47,12 @@ struct square_t {
     int square;
 };
 
-extern struct state_t game_state;
-static const int      win_height = 640;
-static const int      win_width  = 560;
-Texture2D             wp, bp, wn, bn, wb, bb, wr, br, wq, bq, wk, bk;
+struct square_t no_square = {-1, no_sq};
 
-struct move_list_t    moves          = {0};
-struct square_moves_t possibles      = {0};
-int                   floating_piece = -1;
-struct square_t      *original_sqr   = NULL;
+Texture2D wp, bp, wn, bn, wb, bb, wr, br, wq, bq, wk, bk;
+
+int             floating_piece = -1;
+struct square_t original_sqr   = {0};
 
 void load_assets(void)
 {
@@ -95,21 +93,6 @@ void load_assets(void)
     img = LoadImage("assets/bk.png");
     ImageResizeNN(&img, 70 * 1, 70 * 1);
     bk = LoadTextureFromImage(img);
-}
-
-void draw_squares(void)
-{
-    for (int i = 0; i < 8; ++i) {
-        for (int j = 0; j < 8; j++) {
-            Color colour;
-            if ((i + j) % 2 == 1) {
-                colour = BROWN;
-            } else {
-                colour = BEIGE;
-            }
-            DrawRectangle(i * 70, j * 70 + 40, 70, 70, colour);
-        }
-    }
 }
 
 void draw_piece(int piece, float x, float y)
@@ -165,12 +148,15 @@ void draw_piece_middle(int piece, float x, float y)
     return draw_piece(piece, px, py);
 }
 
-int draw_bitboard(u64 bitboard, int piece, int check)
+int draw_bitboard(struct game_t *data, unsigned long long bitboard, int piece,
+                  int check)
 {
+    int x, y = 0;
     for (int i = 0; i < 64; ++i) {
         if ((1ULL << i) & bitboard) {
-            int       x   = (i % 8) * 70;
-            int       y   = (8 - (i / 8) - 1) * 70 + 40;
+            x             = (i % 8) * 70;
+            y             = (8 - (i / 8) - 1) * 70 + 40;
+
             Vector2   pos = {x, y};
             Texture2D sprite;
             Image     img = {0};
@@ -216,6 +202,7 @@ int draw_bitboard(u64 bitboard, int piece, int check)
                     DrawRectangle(x, y, 70, 70, RED);
                 break;
             }
+
             Rectangle rect = {0, 0, 70, 70};
             DrawTextureRec(sprite, rect, pos, WHITE);
         }
@@ -223,14 +210,16 @@ int draw_bitboard(u64 bitboard, int piece, int check)
     return 0;
 }
 
-struct square_t get_square(int x, int y)
+struct square_t get_square(struct game_t *data, struct state_t *state, int x,
+                           int y)
 {
-    int             i      = ( int )(x / 70);
-    int             j      = ( int )((y - 40) / 70);
-    int             sq     = ((7 - j) * 8) + i;
+    int i                  = ( int )(x / 70);
+    int j                  = ( int )((y - 40) / 70);
+    int sq                 = 0;
+    sq                     = ((7 - j) * 8) + i;
     struct square_t square = {-1, sq};
     for (int x = 0; x < 12; ++x) {
-        if ((1ULL << sq) & game_state.bitboards[x]) {
+        if ((1ULL << sq) & state->bitboards[x]) {
             square.piece = x;
             break;
         }
@@ -238,32 +227,34 @@ struct square_t get_square(int x, int y)
     return square;
 }
 
-int update_input()
+struct square_moves_t possibles = {0};
+int update_input(struct game_t *data, struct move_list_t *list)
 {
     int             rc = 0;
-    struct square_t sq = get_square(GetMouseX(), GetMouseY());
+    struct square_t sq =
+            get_square(data, data->game_state, GetMouseX(), GetMouseY());
 
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         if (sq.piece == -1)
-            return 0; // continue;
+            goto draw_floating;
 
-        if ((sq.piece < 6 && game_state.side == black) ||
-            (sq.piece >= 6 && game_state.side == white))
-            return 0; // continue;
+        if ((sq.piece < 6 && data->game_state->side == black) ||
+            (sq.piece >= 6 && data->game_state->side == white))
+            goto draw_floating;
 
-        memset(&possibles, 0, sizeof(possibles));
-        possibles      = moves.squares[sq.square];
+        possibles      = list->squares[sq.square];
         floating_piece = sq.piece;
-        original_sqr   = &sq;
+        original_sqr   = sq;
     } else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
-        if (original_sqr) {
+        if (original_sqr.square < 64 && original_sqr.piece >= 0) {
             int source, target, piece, promo;
             for (int i = 0; i < possibles.count; ++i) {
                 DECODE_MOVE(possibles.moves[i], &source, &target, &piece,
                             &promo);
                 if (target == sq.square) {
-                    make_move(&game_state, possibles.moves[i], all_moves);
-                    original_sqr = NULL;
+                    make_move(data->game_state, possibles.moves[i], all_moves);
+                    original_sqr = no_square;
+                    memset(&possibles, 0, sizeof(struct square_moves_t));
                     break;
                 }
             }
@@ -271,13 +262,8 @@ int update_input()
         }
     } else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
         floating_piece = -1;
-        original_sqr   = NULL;
-        memset(&possibles, 0, sizeof(possibles));
-    }
-
-    if (!original_sqr) {
-        original_sqr = NULL;
-        memset(&possibles, 0, sizeof(possibles));
+        original_sqr   = no_square;
+        memset(&possibles, 0, sizeof(struct square_moves_t));
     }
 
     for (int i = 0; i < possibles.count; ++i) {
@@ -288,82 +274,60 @@ int update_input()
                       colour);
     }
 
+draw_floating:
+    if (floating_piece >= 0)
+        draw_piece_middle(floating_piece, GetMouseX(), GetMouseY());
+    for (int i = 0; i < 12; ++i) {
+        draw_bitboard(data, data->game_state->bitboards[i], i,
+                      data->game_state->check);
+    }
+
     return 0;
 }
 
-int draw(void)
+char score_white[16] = {0};
+char score_black[16] = {0};
+void draw_move_scores(struct game_t *data, struct move_list_t *list)
 {
-    InitWindow(win_width, win_height, "ndjin [chess]");
-    SetTargetFPS(30);
+    double eval = symmetric_eval(data->game_state, list);
+    if (data->game_state->side == white)
+        snprintf(score_white, 16, "%02f", eval);
+    else
+        snprintf(score_black, 16, "%02f", eval);
+    DrawText(score_white, 230, 610, 20, LIGHTGRAY);
+    DrawText(score_black, 230, 10, 20, LIGHTGRAY);
+}
 
-    int rc = 0;
-    load_assets();
-
-    u64 nstate, pstate = game_state.positions[2];
-    generate_moves(&game_state, &moves);
-
-    char buf3[6]  = {'C', 'H', 'E', 'C', 'K', '\0'};
-    char buf4[10] = {'C', 'H', 'E', 'C', 'K', 'M', 'A', 'T', 'E', '\0'};
-    char buf5[10] = {'W', 'I', 'N', 'N', 'E', 'R', '\0'};
-    char buf6[16] = {0};
-    char buf7[16] = {0};
-
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(DARKBROWN);
-
-        draw_squares();
-
-        char ws = ' ';
-        char bs = ' ';
-        if (game_state.side == white) {
-            ws = 'x';
-            bs = ' ';
-        } else if (game_state.side == black) {
-            ws = ' ';
-            bs = 'x';
-        }
-
-        if ((nstate = game_state.positions[2]) != pstate) {
-            pstate = nstate;
-            fprintf(stderr, "generate_moves(): state changed, "
-                            "generating moveset\n");
-            generate_moves(&game_state, &moves);
-        }
-        if (moves.count > 0) {
-            update_input();
-            if (floating_piece >= 0)
-                draw_piece_middle(floating_piece, GetMouseX(), GetMouseY());
-        }
-
-        for (int i = 0; i < 12; ++i) {
-            draw_bitboard(game_state.bitboards[i], i, game_state.check);
-        }
-
-        char buf1[11] = {'B', 'L', 'A', 'C', 'K', ' ', '[', bs, ']', '\0'};
-        char buf2[11] = {'[', ws, ']', ' ', 'W', 'H', 'I', 'T', 'E', '\0'};
-
-        DrawText(buf1, 10, 10, 20, LIGHTGRAY);
-        DrawText(buf2, 450, 610, 20, LIGHTGRAY);
-        if (game_state.check == white_check)
-            DrawText(buf3, 10, 610, 20, LIGHTGRAY);
-        else if (game_state.check == black_check)
-            DrawText(buf3, 480, 10, 20, LIGHTGRAY);
-
-        double eval = symmetric_eval(&game_state, &moves);
-        if (game_state.side == white)
-            snprintf(buf6, 16, "%02f", eval);
-        else
-            snprintf(buf7, 16, "%02f", eval);
-        DrawText(buf6, 230, 610, 20, LIGHTGRAY);
-        DrawText(buf7, 230, 10, 20, LIGHTGRAY);
-
-        EndDrawing();
+char tag1[14]   = {0};
+char tag2[14]   = {0};
+char check[6]   = {'C', 'H', 'E', 'C', 'K', '\0'};
+char mate[10]   = {'C', 'H', 'E', 'C', 'K', 'M', 'A', 'T', 'E', '\0'};
+char winner[10] = {'W', 'I', 'N', 'N', 'E', 'R', '\0'};
+void draw_player_bar(struct game_t *data)
+{
+    char ws = ' ';
+    char bs = ' ';
+    if (data->game_state->side == white) {
+        ws = 'x';
+        bs = ' ';
+    } else if (data->game_state->side == black) {
+        ws = ' ';
+        bs = 'x';
+    }
+    if (data->white == 0x1) {
+        snprintf(tag1, 14, "P%d BLACK [%c]", 2, bs);
+        snprintf(tag2, 14, "[%c] WHITE P%d", ws, 1);
+    } else {
+        snprintf(tag1, 14, "[%c] BLACK P%d ", bs, 1);
+        snprintf(tag2, 14, "P%d WHITE [%c]", 2, ws);
     }
 
-    CloseWindow();
-
-    return 0;
+    DrawText(tag1, 10, 10, 20, LIGHTGRAY);
+    DrawText(tag2, 420, 610, 20, LIGHTGRAY);
+    if (data->game_state->check == white_check)
+        DrawText(check, 10, 610, 20, LIGHTGRAY);
+    else if (data->game_state->check == black_check)
+        DrawText(check, 480, 10, 20, LIGHTGRAY);
 }
 
 /* vim: ft=c ts=4 sts=4 sw=4 ai et cin */

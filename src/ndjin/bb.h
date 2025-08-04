@@ -37,8 +37,8 @@ int get_time_ms(void);
 
 static inline void print_tiles(void);
 static inline void print_bitboard(u64 bitboard);
-static inline void print_attacked(int side);
-static inline void print_board(int unicode);
+static inline void print_attacked(struct state_t *state, int side);
+static inline void print_board(struct state_t *state, int unicode);
 static inline void print_move(unsigned int move, int unicode);
 static inline void print_move_list(struct move_list_t *moves, int unicode);
 
@@ -59,7 +59,7 @@ void       generate_moves(struct state_t *state, struct move_list_t *list);
 
 void               init_all(void);
 static inline void init_slider_attacks(int piece);
-void               init_board(void);
+void               init_board(struct state_t *state);
 
 static inline int count_bits(u64 bitboard);
 static inline int get_lsb_index(u64 bitboard);

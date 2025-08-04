@@ -1,6 +1,6 @@
-- Player 1 & Player 2
-- Lobby/Pairing/Pre-game screens
-- Board orientatation (player on bottom)
+- Loading screen while joining game via code
+- Loading screen showing code when making new game (skips to solo)
+- Show promotion choice and allow selection when available
 
 - Game end logic
 - Check mate / Stale mate detection
@@ -10,12 +10,15 @@
 
 - Find and fix Perft test suite mismatches
 
+MAYBE:
+- Rotate board for p1 always on bottom (seperate board representations)
+
 BUGS:
 - Queen bottom right search dismisses collisions
 - King take in check to resolve doesn't wipe piece
 - Random segfaults (add tracing/logging framework)
 
-- Segfaults may be related to indexing into a staee struct w/
+- Segfaults may be related to indexing into a state struct w/
   dereferencing error or bitboard/positions array
   Maybe incorrect square value when indexing into a masks array
   Check bitboards, masks and pointer dereferencing
