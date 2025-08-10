@@ -36,6 +36,7 @@
 
 #include <ndjin/bb.h>
 #include <ndjin/fen.h>
+#include <net/network.h>
 
 #include "pre.h"
 #include "game.h"
@@ -44,7 +45,7 @@
 const int win_height = 640;
 const int win_width  = 560;
 
-enum { splash, new_game, join_game, game };
+enum { splash, new_game, join_game, game_lobby, game_play };
 
 void draw_squares(void)
 {
@@ -131,7 +132,7 @@ int main(int argc, char **argv)
             if (opponent > no_opponent) {
                 data.player = 0x1;
                 if (opponent == manual_play)
-                    ui_state = game;
+                    ui_state = game_lobby;
                 /* TODO:  Waiting screen display game code until P2 joins */
             }
             break;
@@ -143,11 +144,17 @@ int main(int argc, char **argv)
             if ((rc = draw_tb_buttons(NULL, "  connect")) == 2) {
                 data.player = 0x2;
                 data.code   = atoi(code) & 0xFFF;
-                ui_state    = game;
+                ui_state    = game_play;
             }
             break;
             /* --- END: New Game Screen --- */
-        case game:
+        case game_lobby:
+            /* --- START: New Game Lobby --- */
+            title_box("waiting", 110);
+            show_game_code();
+            break;
+        /* --- END: New Game Lobby --- */
+        case game_play:
             /* --- START: Game Screen --- */
             if ((nstate = state.positions[2]) != pstate) {
                 pstate = nstate;

@@ -32,6 +32,8 @@
 
 #include "raylib.h"
 
+#include <net/network.h>
+
 #include "pre.h"
 
 extern int win_width;
@@ -119,6 +121,23 @@ int handle_button_events(const char *top, const char *bottom)
     return 0;
 }
 
+void show_game_code(void)
+{
+    char     *buf      = get_external_ip();
+    Rectangle text_box = {TOP_BUTTON_XPOS, TOP_BUTTON_YPOS, TOP_BUTTON_WIDTH,
+                          TOP_BUTTON_HEIGHT - 25};
+
+    Color tbc          = {200, 200, 200, 150};
+    DrawRectangleRec(text_box, tbc);
+    DrawRectangleLines(( int )text_box.x, ( int )text_box.y,
+                       ( int )text_box.width, ( int )text_box.height, tbc);
+
+    DrawText(( char * )buf, ( int )text_box.x + 15, ( int )text_box.y + 16, 60,
+             DARKBROWN);
+
+    draw_tb_buttons(NULL, "  Waiting....");
+}
+
 int draw_tb_buttons(const char *top, const char *bottom)
 {
     top_button(top, BUTTON_TEXT_FG, BUTTON_TEXT_BG);
@@ -126,7 +145,7 @@ int draw_tb_buttons(const char *top, const char *bottom)
     return handle_button_events(top, bottom);
 }
 
-void handle_code_input(char buf[13], Rectangle text_box, int mouse_over_text)
+void handle_code_input(char buf[17], Rectangle text_box, int mouse_over_text)
 {
     if (CheckCollisionPointRec(GetMousePosition(), text_box))
         mouse_over_text = 1;

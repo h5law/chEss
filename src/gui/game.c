@@ -28,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <network.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -39,6 +40,7 @@
 #include "game.h"
 #include "state.h"
 
+extern struct p2p  connection;
 extern const char *square_to_coord[64];
 extern const char  ascii_pieces[13];
 
@@ -46,6 +48,8 @@ struct square_t {
     int piece;
     int square;
 };
+
+int connect_to_pair(char *game_code) { establish(game_code, ); }
 
 struct square_t no_square = {-1, no_sq};
 

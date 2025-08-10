@@ -20,6 +20,10 @@ GUI_OBJS = \
 	src/gui/main.o \
 	src/gui/pre.o
 
+NET_OBJS = \
+	src/net/network.o \
+	src/net/shared.o
+
 BB = bb_test
 
 GUI = chess
@@ -28,23 +32,28 @@ PERFT = perft
 
 FEN = fen_test
 
+NET = net_test
+
 .PHONY: all build clean demo
 
 all: clean build demo
 
 clean:
-	rm -f $(OBJS) *.o */*.o */*/*.o
-	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
-	rm -f $(GUI) $(PERFT) $(FEN) $(BB)
+	rm -f $(OBJS) $(GUI_OBJS) $(NET_OBJS) *.o */*.o */*/*.o
+	rm -f $(OBJS:.o=.d) $(GUI_OBJS:.o=.d) $(NET_OBJS.o=.d) *.d */*.d */*/*.d
+	rm -f $(GUI) $(PERFT) $(FEN) $(BB) $(NET)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(TEST): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TEST) $(OBJS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -Isrc/ndjin -o $(TEST) $(OBJS) $(LDFLAGS)
+
+$(NET): $(NET_TEST)
+	$(CC) $(CFLAGS) -Isrc/net -o $(NET) $(NET_OBJS) $(LDFLAGS)
 
 $(GUI): $(OBJS) $(GUI_OBJS)
-	$(CC) $(CFLAGS) -Isrc/gui -o $(GUI) $(OBJS) $(GUI_OBJS) $(LDFLAGS) -lraylib
+	$(CC) $(CFLAGS) -Isrc/gui -Isrc/ndjin -Isrc/net -o $(GUI) $(OBJS) $(GUI_OBJS) $(NET_OBJS) $(LDFLAGS) -lraylib
 
 $(PERFT):
 	$(CC) -Ofast -Isrc/ndjin -D_PERFT_TEST -DNO_DEBUG=1 -o $(PERFT) $(wildcard src/ndjin/*.c) -lm
