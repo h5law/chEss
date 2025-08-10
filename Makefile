@@ -6,7 +6,7 @@ OFLAGS = -Ofast
 CC := gcc
 INCS := -Isrc/ndjin
 LIBS := -lm
-CFLAGS := $(OFLAGS) $(DIAG) $(INCS) -MD -g
+CFLAGS := $(OFLAGS) $(DIAG) $(INCS) -MD -g -std=c2x
 LDFLAGS := $(LDFLAGS) $(LIBS)
 
 OBJS = \
@@ -21,8 +21,7 @@ GUI_OBJS = \
 	src/gui/pre.o
 
 NET_OBJS = \
-	src/net/network.o \
-	src/net/shared.o
+	src/net/network.o
 
 BB = bb_test
 
@@ -52,11 +51,11 @@ $(TEST): $(OBJS)
 $(NET): $(NET_TEST)
 	$(CC) $(CFLAGS) -Isrc/net -o $(NET) $(NET_OBJS) $(LDFLAGS)
 
-$(GUI): $(OBJS) $(GUI_OBJS)
+$(GUI): $(OBJS) $(GUI_OBJS) $(NET_OBJS)
 	$(CC) $(CFLAGS) -Isrc/gui -Isrc/ndjin -Isrc/net -o $(GUI) $(OBJS) $(GUI_OBJS) $(NET_OBJS) $(LDFLAGS) -lraylib
 
 $(PERFT):
-	$(CC) -Ofast -Isrc/ndjin -D_PERFT_TEST -DNO_DEBUG=1 -o $(PERFT) $(wildcard src/ndjin/*.c) -lm
+	$(CC) -Ofast -Isrc/ndjin -D_PERFT_TEST -DNO_DEBUG -o $(PERFT) $(wildcard src/ndjin/*.c) -lm
 	./$(PERFT)
 
 $(BB):

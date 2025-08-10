@@ -122,15 +122,16 @@ struct move_list_t {
 /* clang-format on */
 
 struct state_t {
-    int side;
-    int check;
-    int enpassant;
-    int castle;
-    int ply;
-    int fifty;
-    int fullmoves;
-    u64 bitboards[12];
-    u64 positions[3];
+    int          side;
+    int          check;
+    int          enpassant;
+    int          castle;
+    int          ply;
+    int          fifty;
+    int          fullmoves;
+    u64          bitboards[12];
+    u64          positions[3];
+    unsigned int current_best_move;
 };
 
 enum { all_moves, only_captures };

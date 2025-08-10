@@ -41,9 +41,13 @@
 #include "pre.h"
 #include "game.h"
 #include "state.h"
+#include "network.h"
 
-const int win_height = 640;
-const int win_width  = 560;
+const int      win_height = 640;
+const int      win_width  = 560;
+struct state_t state      = {0};
+
+extern struct p2p connection;
 
 enum { splash, new_game, join_game, game_lobby, game_play };
 
@@ -85,7 +89,6 @@ int main(int argc, char **argv)
 {
     init_all();
 
-    struct state_t     state           = {0};
     struct game_t      data            = {0};
     struct move_list_t available_moves = {0};
 
@@ -150,8 +153,12 @@ int main(int argc, char **argv)
             /* --- END: New Game Screen --- */
         case game_lobby:
             /* --- START: New Game Lobby --- */
-            title_box("waiting", 110);
-            show_game_code();
+            while (!connection.connected) {
+                title_box("waiting", 110);
+                show_game_code();
+            }
+            title_box("starting", 100);
+            ui_state = game_play;
             break;
         /* --- END: New Game Lobby --- */
         case game_play:

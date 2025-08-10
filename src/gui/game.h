@@ -44,7 +44,7 @@ void draw_piece_middle(int piece, float x, float y);
 void draw_player_bar(struct game_t *data);
 void draw_move_scores(struct game_t *data, struct move_list_t *list);
 
-int update_input(struct game_t *data, struct move_list_t *list);
+void update_input(struct game_t *data, struct move_list_t *list);
 
 #endif /* GAME_H */
 

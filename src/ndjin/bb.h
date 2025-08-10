@@ -83,6 +83,8 @@ void   filter_legal(struct state_t *state, struct move_list_t *moves,
 double material_count(struct state_t *state);
 double symmetric_eval(struct state_t *state, struct move_list_t *moves);
 
+int apply_move(void *state, unsigned int enc_move);
+
 #endif /* BITBOARD_H */
 
 /* vim: ft=c ts=4 sts=4 sw=4 ai et cin */

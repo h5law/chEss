@@ -158,7 +158,7 @@ game_msg_n pop_from_stack(gms_t *stack);
 
 char *get_external_ip(void);
 
-int establish(int domain, int port, struct sockaddr *serv_addr);
+int establish(int domain, int port);
 
 void *receiving_thread(void *connection);
 

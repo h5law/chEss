@@ -28,7 +28,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <network.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -39,6 +38,18 @@
 
 #include "game.h"
 #include "state.h"
+#include "network.h"
+
+#ifndef NO_DEBUG
+#define DEBUG(...)                                                             \
+    do {                                                                       \
+        fprintf(stderr, "%d: %s    ", __LINE__, __FILE__);                     \
+        fprintf(stderr, __VA_ARGS__);                                          \
+    } while (0);
+#else
+#define NO_DEBUG 1
+#define DEBUG(...)
+#endif
 
 extern struct p2p  connection;
 extern const char *square_to_coord[64];
@@ -48,8 +59,6 @@ struct square_t {
     int piece;
     int square;
 };
-
-int connect_to_pair(char *game_code) { establish(game_code, ); }
 
 struct square_t no_square = {-1, no_sq};
 
@@ -232,7 +241,7 @@ struct square_t get_square(struct game_t *data, struct state_t *state, int x,
 }
 
 struct square_moves_t possibles = {0};
-int update_input(struct game_t *data, struct move_list_t *list)
+void update_input(struct game_t *data, struct move_list_t *list)
 {
     int             rc = 0;
     struct square_t sq =
@@ -240,6 +249,13 @@ int update_input(struct game_t *data, struct move_list_t *list)
 
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         if (sq.piece == -1)
+            goto draw_floating;
+
+        DEBUG("update_input(): current side %s, current player %d\n",
+              (data->game_state->side == white) ? "white" : "black",
+              data->player);
+        if (!(data->game_state->side == white && data->white == data->player) &&
+            !(data->game_state->side == black && data->white != data->player))
             goto draw_floating;
 
         if ((sq.piece < 6 && data->game_state->side == black) ||
@@ -256,7 +272,7 @@ int update_input(struct game_t *data, struct move_list_t *list)
                 DECODE_MOVE(possibles.moves[i], &source, &target, &piece,
                             &promo);
                 if (target == sq.square) {
-                    make_move(data->game_state, possibles.moves[i], all_moves);
+                    apply_move(data->game_state, possibles.moves[i]);
                     original_sqr = no_square;
                     memset(&possibles, 0, sizeof(struct square_moves_t));
                     break;
@@ -286,7 +302,7 @@ draw_floating:
                       data->game_state->check);
     }
 
-    return 0;
+    return;
 }
 
 char score_white[16] = {0};

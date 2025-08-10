@@ -36,6 +36,7 @@
 #include "bb.h"
 
 #ifndef NO_DEBUG
+
 #define DEBUG(...)                                                             \
     do {                                                                       \
         fprintf(stderr, "%d: %s    ", __LINE__, __FILE__);                     \
@@ -1675,6 +1676,16 @@ void generate_moves(struct state_t *state, struct move_list_t *list)
     }
 
     return;
+}
+
+int apply_move(void *state, unsigned int enc_move)
+{
+    if (enc_move == 0x00000000)
+        enc_move = (( struct state_t * )state)->current_best_move;
+    DEBUG("apply_move(): applying move %lld\n", enc_move);
+    if (make_move(( struct state_t * )state, enc_move, all_moves))
+        return 1;
+    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

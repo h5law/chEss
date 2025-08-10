@@ -44,6 +44,8 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
+#include <ndjin/types.h>
+
 #include "network.h"
 
 #ifndef NO_DEBUG
@@ -57,8 +59,8 @@
 #define DEBUG(...)
 #endif
 
-extern unsigned int get_next_move(void);
-extern int          apply_received_move(unsigned int move);
+extern struct state_t *state;
+extern int             apply_move(void *state, unsigned int move);
 
 const int PORT                     = 54355;
 
@@ -165,7 +167,7 @@ game_msg_n pop_from_stack(gms_t *stack)
     return rval;
 }
 
-int establish(int domain, int port, struct sockaddr *serv_addr)
+int establish(int domain, int port)
 {
     struct sockaddr_in addr      = {0};
     struct sockaddr_in peer_addr = {0};
@@ -406,13 +408,13 @@ receive_game_loop:
             }
         }
 
-        game_msg_n   received = ( game_msg_n )(*( game * )buf);
+        game_msg_n   received = ( game_msg_n )(*( game_msg_n * )buf);
         unsigned int move     = received & 0xFFFFFFFF;
         unsigned int prev     = (received >> 32) & 0xFFFFFFFF;
         unsigned int header   = (received >> 48) & 0x0000FFFF;
         unsigned int counter  = (received >> 64) & 0x0000FFFF;
         int          rc       = 0;
-        if ((rc = apply_received_move(move)) > 0) {
+        if ((rc = apply_move(state, move)) > 0) {
             pthread_mutex_lock(&(( struct p2p * )connection)->send_stack_mu);
             push_to_stack(((( struct p2p * )connection)->send_message_stack),
                           previous_move);
@@ -429,10 +431,10 @@ receive_game_loop:
     }
 
 stop_listening:
-    disconnect(connection);
-    pthread_mutex_destroy(&connection->send_stack_mu);
-    pthread_cancel(connection->sending_thread_pid);
-    pthread_cancel(connection->receiving_thread_pid);
+    disconnect((( struct p2p * )connection));
+    pthread_mutex_destroy(&(( struct p2p * )&connection)->send_stack_mu);
+    pthread_cancel((( struct p2p * )connection)->sending_thread_pid);
+    pthread_cancel((( struct p2p * )connection)->receiving_thread_pid);
     return 0;
 }
 
@@ -453,26 +455,35 @@ void *sending_thread(void *connection)
 
         unsigned int prev_move       = previous_move & 0xFFFFFFFF;
         unsigned int prev_prev       = (previous_move >> 32) & 0xFFFFFFFF;
-        unsigned int prev_header     = (previous_move >> 48) & 0x0000FFFF;
+        unsigned int header          = (previous_move >> 48) & 0x0000FFFF;
         unsigned int prev_counter    = (previous_move >> 64) & 0x0000FFFF;
 
         game_msg_n current_best_move = 0;
-        while (((( struct p2p * )connection)->send_message_stack)->size) {
+        pthread_mutex_lock(&(( struct p2p * )connection)->send_stack_mu);
+        int stack_size =
+                ((( struct p2p * )connection)->send_message_stack)->size;
+        DEBUG("Received: %d messaged from shared stack\n", stack_size);
+        pthread_mutex_unlock(&(( struct p2p * )connection)->send_stack_mu);
+        while (stack_size) {
             pthread_mutex_lock(&(( struct p2p * )connection)->send_stack_mu);
             game_msg_n msg = pop_from_stack(
-                    &(( struct p2p * )connection)->send_message_stack);
+                    (( struct p2p * )connection)->send_message_stack);
+            stack_size =
+                    ((( struct p2p * )connection)->send_message_stack)->size;
             pthread_mutex_unlock(&(( struct p2p * )connection)->send_stack_mu);
 
             switch (header) {
             case PREVIOUS_MOVE_NUMBER:
+                DEBUG("send_move(): retrying previous move\n");
                 send_move((( struct p2p * )connection)->send_socket,
                           NEW_INIT_96(prev_move, prev_prev,
                                       PREVIOUS_MOVE_NUMBER, prev_counter));
                 break;
             case CURRENT_MOVE_NUMBER:
-                move                 = get_current_move();
-                game_msg_n next_move = NEW_INIT_96(
-                        move, prev_move, CURRENT_MOVE_NUMBER, counter + 1);
+                DEBUG("send_move(): sending best current move\n");
+                unsigned int move      = apply_move(state, 0x00000000);
+                game_msg_n   next_move = NEW_INIT_96(
+                        move, prev_move, CURRENT_MOVE_NUMBER, prev_counter + 1);
                 send_move((( struct p2p * )connection)->send_socket, next_move);
                 break;
             default:
@@ -482,41 +493,14 @@ void *sending_thread(void *connection)
                 break;
             }
         }
-
-        if (header != CURRENT_MOVE_NUMBER &&
-            (header == PREVIOUS_MOVE_NUMBER && move == previous_move)) {
-            send_move((( struct p2p * )connection)->send_socket,
-                      NEW_INIT_96(prev, 0x00000000, PREVIOUS_MOVE_NUMBER,
-                                  counter - 1));
-            DEBUG("send_move(): retrying previous move\n");
-        }
-
-        char buf[sizeof(unsigned int) * 2] = {0};
-
-        if ((recv_len = recv(recv_len, buf, sizeof(buf), 0)) < 0) {
-            if (errno == ENOTCONN || errno == ECONNREFUSED) {
-                pthread_cancel(
-                        (( struct p2p * )connection)->sending_thread_pid);
-                disconnect(( struct p2p * )connection);
-            }
-        }
-
-        if (!recv_len)
-            continue;
-        DEBUG("Received: %ld bytes from connected peer\n", recv_len)
-
-        if ((( game_msg_n )(*( game_msg_n * )buf + (sizeof(game_msg_n) * 2)) &
-             0x00FF) == BAD_MOVE_NUMBER) {
-            DEBUG("recveiving_thread: sending across pipe to retry "
-                  "move\n");
-            // TODO: Lock and send previous move (add to stack)
-        }
     }
-    disconnect(( struct p2p * )connection);
-    pthread_exit(NULL);
-}
 
-unsigned int recieived_move(game_msg_n move_in) {}
+    disconnect((( struct p2p * )connection));
+    pthread_mutex_destroy(&(( struct p2p * )&connection)->send_stack_mu);
+    pthread_cancel((( struct p2p * )connection)->sending_thread_pid);
+    pthread_cancel((( struct p2p * )connection)->receiving_thread_pid);
+    return 0;
+}
 
 int send_header(int socket, header_n header)
 {
