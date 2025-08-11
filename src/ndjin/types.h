@@ -31,6 +31,17 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#ifndef NO_DEBUG
+#define DEBUG(...)                                                             \
+    do {                                                                       \
+        fprintf(stderr, "%d: %s    ", __LINE__, __FILE__);                     \
+        fprintf(stderr, __VA_ARGS__);                                          \
+    } while (0);
+#else
+#define NO_DEBUG
+#define DEBUG(...)
+#endif
+
 typedef unsigned long long u64;
 
 #define set_bit(bitboard, square) ((bitboard) |= (1ULL << (square)))

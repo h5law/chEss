@@ -28,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -38,10 +39,12 @@
 #include <ndjin/fen.h>
 #include <net/network.h>
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+
 #include "pre.h"
 #include "game.h"
 #include "state.h"
-#include "network.h"
 
 const int      win_height = 640;
 const int      win_width  = 560;
@@ -104,14 +107,15 @@ int main(int argc, char **argv)
 
     load_assets();
 
-    char code[13] = {0};
+    char code[15] = {0};
     u64  nstate, pstate = state.positions[2];
 
     enum { no_opponent, manual_play, bot_play };
 
-    int opponent = no_opponent;
-    int ui_state = splash;
-    int rc       = 0;
+    int   opponent = no_opponent;
+    int   ui_state = splash;
+    int   rc       = 0;
+    char *ip       = NULL;
 
     while (!WindowShouldClose()) {
         BeginDrawing();
@@ -136,7 +140,6 @@ int main(int argc, char **argv)
                 data.player = 0x1;
                 if (opponent == manual_play)
                     ui_state = game_lobby;
-                /* TODO:  Waiting screen display game code until P2 joins */
             }
             break;
             /* --- END: New Game Screen --- */
@@ -144,25 +147,30 @@ int main(int argc, char **argv)
             /* --- START: New Game Screen --- */
             title_box("join game", 40);
             game_code_entry(code);
+            data.code = inet_addr(code);
             if ((rc = draw_tb_buttons(NULL, "  connect")) == 2) {
                 data.player = 0x2;
-                data.code   = atoi(code) & 0xFFF;
-                ui_state    = game_play;
+                establish(data.code, PORT);
+                ui_state = game_play;
             }
             break;
             /* --- END: New Game Screen --- */
         case game_lobby:
             /* --- START: New Game Lobby --- */
-            while (!connection.connected) {
-                title_box("waiting", 110);
-                show_game_code();
-            }
-            title_box("starting", 100);
+            title_box(" lobby", 110);
+            show_game_code();
             ui_state = game_play;
             break;
         /* --- END: New Game Lobby --- */
         case game_play:
             /* --- START: Game Screen --- */
+            title_box("pairing", 100);
+            show_game_code();
+            while (!connection.connected) {
+                if (establish(data.code, PORT) == 0) {
+                    break;
+                }
+            }
             if ((nstate = state.positions[2]) != pstate) {
                 pstate = nstate;
                 fprintf(stderr, "generate_moves(): state changed, "

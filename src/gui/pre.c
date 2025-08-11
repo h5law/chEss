@@ -29,6 +29,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 
 #include "raylib.h"
 
@@ -123,7 +124,8 @@ int handle_button_events(const char *top, const char *bottom)
 
 void show_game_code(void)
 {
-    char     *buf      = get_external_ip();
+    char ip[16] = {0};
+    get_external_ip(ip);
     Rectangle text_box = {TOP_BUTTON_XPOS, TOP_BUTTON_YPOS, TOP_BUTTON_WIDTH,
                           TOP_BUTTON_HEIGHT - 25};
 
@@ -132,10 +134,10 @@ void show_game_code(void)
     DrawRectangleLines(( int )text_box.x, ( int )text_box.y,
                        ( int )text_box.width, ( int )text_box.height, tbc);
 
-    DrawText(( char * )buf, ( int )text_box.x + 15, ( int )text_box.y + 16, 60,
+    DrawText(( char * )ip, ( int )text_box.x + 15, ( int )text_box.y + 16, 60,
              DARKBROWN);
 
-    draw_tb_buttons(NULL, "  Waiting....");
+    draw_tb_buttons(NULL, "Waiting...");
 }
 
 int draw_tb_buttons(const char *top, const char *bottom)
@@ -145,11 +147,12 @@ int draw_tb_buttons(const char *top, const char *bottom)
     return handle_button_events(top, bottom);
 }
 
-void handle_code_input(char buf[17], Rectangle text_box, int mouse_over_text)
+void handle_code_input(char buf[16], Rectangle text_box, int mouse_over_text)
 {
     if (CheckCollisionPointRec(GetMousePosition(), text_box))
         mouse_over_text = 1;
     else
+
         mouse_over_text = 0;
 
     if (mouse_over_text) {
@@ -157,7 +160,7 @@ void handle_code_input(char buf[17], Rectangle text_box, int mouse_over_text)
         int key = GetCharPressed();
         while (key > 0) {
             int len = strlen(buf);
-            if ((key >= 48) && (key <= 57) && (len <= 12)) {
+            if ((key >= 46 && key != 47) && (key <= 57) && (len <= 16)) {
                 buf[strlen(buf)] = ( char )key;
             }
 
@@ -172,9 +175,9 @@ void handle_code_input(char buf[17], Rectangle text_box, int mouse_over_text)
         SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 }
 
-void game_code_entry(char buf[13])
+void game_code_entry(char buf[16])
 {
-    buf[12]              = '\0';
+    buf[16]              = '\0';
     Rectangle text_box   = {TOP_BUTTON_XPOS, TOP_BUTTON_YPOS, TOP_BUTTON_WIDTH,
                             TOP_BUTTON_HEIGHT - 25};
 
@@ -191,7 +194,7 @@ void game_code_entry(char buf[13])
         DrawRectangleLines(( int )text_box.x, ( int )text_box.y,
                            ( int )text_box.width, ( int )text_box.height, tbc);
 
-    DrawText(( char * )buf, ( int )text_box.x + 15, ( int )text_box.y + 16, 60,
+    DrawText(( char * )buf, ( int )text_box.x + 16, ( int )text_box.y + 16, 60,
              DARKBROWN);
 }
 

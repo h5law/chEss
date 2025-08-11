@@ -31,38 +31,26 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <fcntl.h>
-#include <pthread.h>
-#include <poll.h>
 #include <time.h>
-#include <sys/types.h>
 #include <unistd.h>
 
-#include <arpa/inet.h>
-#include <netdb.h>
+#include <fcntl.h>
+#include <pthread.h>
+
+#include <inttypes.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <netdb.h>
+
+#include <arpa/inet.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
 
 #include <ndjin/types.h>
 
 #include "network.h"
 
-#ifndef NO_DEBUG
-#define DEBUG(...)                                                             \
-    do {                                                                       \
-        fprintf(stderr, "%d: %s    ", __LINE__, __FILE__);                     \
-        fprintf(stderr, __VA_ARGS__);                                          \
-    } while (0);
-#else
-#define NO_DEBUG 1
-#define DEBUG(...)
-#endif
-
 extern struct state_t *state;
 extern int             apply_move(void *state, unsigned int move);
-
-const int PORT                     = 54355;
 
 const header_n NDJIN_PING          = PING_PONG(PING_NUMBER, 1);
 const header_n NDJIN_PONG          = PING_PONG(PONG_NUMBER, 2);
@@ -79,51 +67,50 @@ int   ping_interval;
 
 struct p2p connection = {0};
 
-char *get_external_ip(void)
+void get_external_ip(char res[16])
 {
-    char cmd[]     = "GET / HTTP/1.1\nHost: whatismyip.akamai.com\n\n";
     char buf[1000] = {0};
-    int  rval, s = 0;
+    memset(res, 0, 16);
+    char    cmd[] = "GET / HTTP/1.1\nHost: whatismyip.akamai.com\n\n";
+    int     rc, sock = 0;
+    ssize_t recv_len      = 0;
 
     struct addrinfo hints = {0}, *addrs;
-    hints.ai_family       = AF_INET;
-    hints.ai_socktype     = SOCK_STREAM;
-    hints.ai_protocol     = 0;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family   = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family   = 0;
+    hints.ai_protocol = 0;
 
-    rval = getaddrinfo("whatismyip.akamai.com", "80", &hints, &addrs);
-    if (rval != 0) {
-        fprintf(stderr, "getaddrinfo failed: %s\n", gai_strerror(rval));
+    rc = getaddrinfo("whatismyip.akamai.com", "80", &hints, &addrs);
+    if (rc < 0) {
+        DEBUG("get_external_ip(): failed: %s\n", gai_strerror(rc));
+        goto cleanup;
+    }
+    if ((sock = socket(addrs->ai_family, addrs->ai_socktype,
+                       addrs->ai_protocol)) == -1) {
+        DEBUG("get_external_ip(): socket creation failed\n");
+        goto cleanup;
+    }
+    if ((rc = connect(sock, addrs->ai_addr, addrs->ai_addrlen)) == -1) {
+        DEBUG("get_external_ip(): connect establishment failed\n");
+        goto cleanup;
+    }
+    if ((rc = send(sock, cmd, strlen(cmd), 0)) == -1) {
+        DEBUG("get_external_ip(): cmd send failed\n");
+        goto cleanup;
+    }
+    if ((recv_len = recv(sock, buf, sizeof(buf), 0)) < 1) {
+        DEBUG("get_external_ip(): response recveive failed\n");
         goto cleanup;
     }
 
-    s = socket(addrs->ai_family, addrs->ai_socktype, addrs->ai_protocol);
-    if (s == -1) {
-        fprintf(stderr, "get_ip(): connection socket failed\n");
-        goto cleanup;
-    }
-
-    rval = connect(s, addrs->ai_addr, addrs->ai_addrlen);
-    if (rval == -1) {
-        fprintf(stderr, "get_ip(): connect failed\n");
-        goto cleanup;
-    }
-
-    rval = send(s, cmd, strlen(cmd), 0);
-    if (rval == -1) {
-        fprintf(stderr, "get_ip(): send failed\n");
-        goto cleanup;
-    }
-
-    rval = recv(s, buf, sizeof(buf), 0);
-    if (rval == -1) {
-        fprintf(stderr, "get_ip(): recv failed\n");
-        goto cleanup;
-    }
-
-    char *start = buf, *end;
-    end         = strchr(start, '\n');
-    if (!strncmp(start, "HTTP/1.1 200 OK", end - start - 1)) {
-        while (!(end[1] == '\r' && end[2] == '\n')) {
+selection:
+    DEBUG("get_external_ip(): determining public ip\n");
+    char *start = buf;
+    char *end   = strchr(start, '\n');
+    if (!strncmp(start, "HTTP/1.1 200 OK", 16) == 0) {
+        while (end[1] != '\r' || end[2] != '\n') {
             start = end + 2;
             end   = strchr(start, '\n');
         }
@@ -131,15 +118,13 @@ char *get_external_ip(void)
         end   = strchr(start, '\n');
         if (end)
             *end = 0;
-        close(s);
-        freeaddrinfo(addrs);
-        return start;
+        DEBUG("get_external_ip(): Found public IP of: %s\n", start);
+        snprintf(res, 16, "%s", start);
     }
 
-    close(s);
-    freeaddrinfo(addrs);
 cleanup:
-    return "";
+    close(sock);
+    freeaddrinfo(addrs);
 }
 
 gms_t new_stack()
@@ -167,7 +152,7 @@ game_msg_n pop_from_stack(gms_t *stack)
     return rval;
 }
 
-int establish(int domain, int port)
+int establish(in_addr_t domain, int port)
 {
     struct sockaddr_in addr      = {0};
     struct sockaddr_in peer_addr = {0};
@@ -182,10 +167,10 @@ int establish(int domain, int port)
 
     addr.sin_family      = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port        = htons(PORT);
+    addr.sin_port        = htons(( int )PORT);
 
     DEBUG("Local IP Address: %s:%d\n", inet_ntoa(addr.sin_addr),
-          ( int )ntohs(addr.sin_port))
+          ( int )ntohs(addr.sin_port));
 
     if (bind(recv_sock, ( struct sockaddr * )&addr, sizeof(addr)) < 0) {
         fprintf(stderr, "establish(): failed to bind socket to address:port\n");
@@ -215,7 +200,7 @@ int establish(int domain, int port)
     }
 
     peer_addr.sin_family      = AF_INET;
-    peer_addr.sin_addr.s_addr = INADDR_ANY;
+    peer_addr.sin_addr.s_addr = domain;
     peer_addr.sin_port        = htons(port);
 
     if (connect(send_sock, ( struct sockaddr * )&peer_addr, sizeof(peer_addr)) <
@@ -236,8 +221,8 @@ int establish(int domain, int port)
 
     int cross_thread_pipes[2];
     if (pipe(cross_thread_pipes) == -1) {
-        fprintf(stderr,
-                "establish(): failed to create thread communicating pipe\n");
+        fprintf(stderr, "establish(): failed to create thread "
+                        "communicating pipe\n");
         return 8;
     }
 
@@ -282,7 +267,7 @@ void *receiving_thread(void *connection)
 
         if (!recv_len)
             continue;
-        DEBUG("Received: %ld bytes from connected peer\n", recv_len)
+        DEBUG("Received: %ld bytes from connected peer\n", recv_len);
 
         unsigned int header = 0;
         memcpy(&header, buf, sizeof(unsigned int));
@@ -382,7 +367,7 @@ receive_game_loop:
 
         if (!recv_len)
             continue;
-        DEBUG("Received: %ld bytes from connected peer\n", recv_len)
+        DEBUG("Received: %ld bytes from connected peer\n", recv_len);
 
         if ((recv_len = recv(recv_len, buf, sizeof(buf), 0)) <= 0) {
             if (errno == ENOTCONN || errno == ECONNREFUSED) {

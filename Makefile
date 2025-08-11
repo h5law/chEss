@@ -5,14 +5,13 @@ OFLAGS = -Ofast
 
 CC := gcc
 INCS := -Isrc/ndjin
-LIBS := -lm
-CFLAGS := $(OFLAGS) $(DIAG) $(INCS) -MD -g -std=c2x
+LIBS := -lm -lc
+CFLAGS := $(OFLAGS) $(DIAG) $(INCS) -MD -g
 LDFLAGS := $(LDFLAGS) $(LIBS)
 
 OBJS = \
     src/ndjin/bb.o \
 	src/ndjin/fen.o \
-	src/ndjin/perft.o \
 	src/ndjin/types.o
 
 GUI_OBJS = \
@@ -66,7 +65,7 @@ $(FEN):
 	$(CC) $(CFLAGS) -D_FEN_TEST -o $(FEN) $(wildcard src/ndjin/*.c) -lm
 	./$(FEN)
 
-build: $(OBJS) $(GUI_OBJS) $(GUI)
+build: $(OBJS) $(GUI_OBJS) $(NET_OBJS) $(GUI)
 
 demo: clean build
 	./$(GUI)

@@ -33,7 +33,10 @@
 
 #include <stdbit.h>
 #include <stdlib.h>
-#include <sys/socket.h>
+#include <pthread.h>
+#include <netinet/in.h>
+
+#define PORT         54355
 
 #define CONN_PROT    AF_INET
 #define CONN_TYPE    SOCK_STREAM
@@ -156,9 +159,9 @@ game_msg_n pop_from_stack(gms_t *stack);
                           (( header_n )0x0000 << 16),                          \
                   MAGIC_NUMBER, HANDSHAKE_STEP_ONE, VERSION)
 
-char *get_external_ip(void);
+void get_external_ip(char buf[16]);
 
-int establish(int domain, int port);
+int establish(in_addr_t domain, int port);
 
 void *receiving_thread(void *connection);
 

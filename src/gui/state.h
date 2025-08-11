@@ -31,8 +31,10 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include <netinet/in.h>
+
 struct game_t {
-    unsigned int code   : 12;
+    in_addr_t code      : 15;
 
     /* 0 1 - player 1 white
      * 1 0 - player 2 white

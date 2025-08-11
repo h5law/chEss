@@ -40,17 +40,6 @@
 #include "state.h"
 #include "network.h"
 
-#ifndef NO_DEBUG
-#define DEBUG(...)                                                             \
-    do {                                                                       \
-        fprintf(stderr, "%d: %s    ", __LINE__, __FILE__);                     \
-        fprintf(stderr, __VA_ARGS__);                                          \
-    } while (0);
-#else
-#define NO_DEBUG 1
-#define DEBUG(...)
-#endif
-
 extern struct p2p  connection;
 extern const char *square_to_coord[64];
 extern const char  ascii_pieces[13];

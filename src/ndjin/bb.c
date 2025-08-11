@@ -35,18 +35,6 @@
 #include "types.h"
 #include "bb.h"
 
-#ifndef NO_DEBUG
-
-#define DEBUG(...)                                                             \
-    do {                                                                       \
-        fprintf(stderr, "%d: %s    ", __LINE__, __FILE__);                     \
-        fprintf(stderr, __VA_ARGS__);                                          \
-    } while (0);
-#else
-#define NO_DEBUG 1
-#define DEBUG(...)
-#endif
-
 ////////////////////////////////////////////////////////////////////////////////
 //                                 Extern                                     //
 ////////////////////////////////////////////////////////////////////////////////
@@ -1682,7 +1670,7 @@ int apply_move(void *state, unsigned int enc_move)
 {
     if (enc_move == 0x00000000)
         enc_move = (( struct state_t * )state)->current_best_move;
-    DEBUG("apply_move(): applying move %lld\n", enc_move);
+    DEBUG("apply_move(): applying move %d\n", enc_move);
     if (make_move(( struct state_t * )state, enc_move, all_moves))
         return 1;
     return 0;
