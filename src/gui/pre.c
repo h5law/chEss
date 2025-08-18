@@ -29,7 +29,6 @@
  */
 
 #include <string.h>
-#include <stdio.h>
 
 #include "raylib.h"
 
@@ -122,10 +121,8 @@ int handle_button_events(const char *top, const char *bottom)
     return 0;
 }
 
-void show_game_code(void)
+void show_game_code(char ip[16])
 {
-    char ip[16] = {0};
-    get_external_ip(ip);
     Rectangle text_box = {TOP_BUTTON_XPOS, TOP_BUTTON_YPOS, TOP_BUTTON_WIDTH,
                           TOP_BUTTON_HEIGHT - 25};
 

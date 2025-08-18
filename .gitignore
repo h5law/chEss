@@ -7,3 +7,5 @@ bb_test
 perft
 *.o
 *.d
+.crush
+CRUSH.md

@@ -52,6 +52,9 @@
 extern struct state_t *state;
 extern int             apply_move(void *state, unsigned int move);
 
+const header_n NDJIN_DOMAIN_EXCHANGE =
+        NEW_HEADER_56(DOMAIN_EXCHANGE, MAGIC_NUMBER, 0x00000005, VERSION);
+
 const header_n NDJIN_PING          = PING_PONG(PING_NUMBER, 1);
 const header_n NDJIN_PONG          = PING_PONG(PONG_NUMBER, 2);
 
@@ -101,7 +104,7 @@ void get_external_ip(char res[16])
         goto cleanup;
     }
     if ((recv_len = recv(sock, buf, sizeof(buf), 0)) < 1) {
-        DEBUG("get_external_ip(): response recveive failed\n");
+        DEBUG("get_external_ip(): response receive failed\n");
         goto cleanup;
     }
 
@@ -152,7 +155,246 @@ game_msg_n pop_from_stack(gms_t *stack)
     return rval;
 }
 
-int establish(in_addr_t domain, int port)
+int listen_for_domain(char domain[16])
+{
+    struct sockaddr_in addr      = {0};
+    int                recv_sock = 0;
+    ssize_t            recv_len  = 0;
+
+    if ((recv_sock = socket(CONN_PROT, CONN_TYPE, 0) < 0)) {
+        fprintf(stderr,
+                "listen_for_domain(): failed to create receiver socket file "
+                "descriptor\n");
+        return 1;
+    }
+
+    addr.sin_family      = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port        = htons(( int )COMS_PORT);
+
+    DEBUG("Local IP Address: %s:%d\n", inet_ntoa(addr.sin_addr),
+          ( int )ntohs(addr.sin_port));
+
+    if (bind(recv_sock, ( struct sockaddr * )&addr, sizeof(addr)) < 0) {
+        fprintf(stderr,
+                "listen_for_domain(): failed to bind socket to address:port\n");
+        return 2;
+    }
+
+    if (listen(recv_sock, 1) < 0) {
+        fprintf(stderr, "listen_for_domain(): failed to listen on socket\n");
+        return 3;
+    }
+
+    if (fcntl(recv_sock, F_SETFL, O_NONBLOCK) != 0) {
+        fprintf(stderr,
+                "listen_for_domain(): failed to set receiving socket file "
+                "descriptor as non-blocking\n");
+        return 4;
+    }
+
+    struct sockaddr_in ext_addr         = {0};
+    struct sockaddr_in peer_addr        = {0};
+    int                send_sock        = 0;
+    int                rc               = 0;
+
+    recv_len                            = 0;
+    char buf[sizeof(unsigned int) + 16] = {0};
+
+    while (1) {
+        if ((recv_len = recv(recv_sock, buf, sizeof(buf), 0)) < 0) {
+            if (errno == ENOTCONN || errno == ECONNREFUSED) {
+                pthread_cancel((( struct p2p )connection).receiving_thread_pid);
+                disconnect((( struct p2p * )&connection));
+            }
+            continue;
+        }
+        DEBUG("Received: %ld bytes from connected peer\n", recv_len);
+
+        if (recv_len < sizeof(header_n) + 16) {
+            fprintf(stderr, "listening_for_domain(): incorrectly formatted "
+                            "domain received");
+            continue;
+        }
+
+        if ((NDJIN_DOMAIN_EXCHANGE & 0xFFFFFFFF) != (( unsigned int )*buf)) {
+            fprintf(stderr, "listen_for_domain(): incorrect header data\n");
+            continue;
+        }
+
+        if (((NDJIN_DOMAIN_EXCHANGE >> 32) & 0x0000FFFF) != MAGIC_NUMBER) {
+            fprintf(stderr,
+                    "listen_for_domain(): incorrect header magic number\n");
+            continue;
+        }
+
+        if (((NDJIN_DOMAIN_EXCHANGE >> 48) & 0xF0) != 0x00000005) {
+            fprintf(stderr, "listen_for_domain(): incorrect header status\n");
+            continue;
+        }
+
+        if (((NDJIN_DOMAIN_EXCHANGE >> 48) & 0x0F) != VERSION) {
+            fprintf(stderr,
+                    "listen_for_domain(): incorrect protocol version\n");
+            continue;
+        }
+
+        if (memcpy(domain, buf + sizeof(unsigned int), 16) != 0) {
+            fprintf(stderr,
+                    "listening_for_domain(): error copying domain received");
+            continue;
+        }
+
+        if ((send_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            fprintf(stderr,
+                    "send_domain(): failed to create sending socket file "
+                    "descriptor\n");
+            return 1;
+        }
+
+        peer_addr.sin_family      = AF_INET;
+        peer_addr.sin_addr.s_addr = inet_addr(domain);
+        peer_addr.sin_port        = htons(COMS_PORT);
+
+        if (connect(send_sock, ( struct sockaddr * )&peer_addr,
+                    sizeof(peer_addr)) < 0) {
+            fprintf(stderr,
+                    "send_domain(): failed to connect to peer's socket\n");
+            return 2;
+        }
+
+        if ((rc = send(send_sock,
+                       ( char * )NEW_HEADER_56(NDJIN_DOMAIN_EXCHANGE,
+                                               MAGIC_NUMBER, 0x00000005,
+                                               VERSION),
+                       sizeof(header_n), 0)) < 0) {
+            fprintf(stderr, "send_domain(): failed to send domain\n");
+            continue;
+        }
+        close(send_sock);
+        break;
+    }
+
+    close(recv_sock);
+    return 0;
+}
+
+int send_domain(char domain[16])
+{
+    struct sockaddr_in addr      = {0};
+    struct sockaddr_in peer_addr = {0};
+    int                send_sock = 0;
+    int                rc        = 0;
+
+    if ((send_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        fprintf(stderr, "send_domain(): failed to create sending socket file "
+                        "descriptor\n");
+        return 1;
+    }
+
+    peer_addr.sin_family      = AF_INET;
+    peer_addr.sin_addr.s_addr = inet_addr(domain);
+    peer_addr.sin_port        = htons(COMS_PORT);
+
+    if (connect(send_sock, ( struct sockaddr * )&peer_addr, sizeof(peer_addr)) <
+        0) {
+        fprintf(stderr, "send_domain(): failed to connect to peer's socket\n");
+        return 2;
+    }
+
+    struct sockaddr_in local_addr = {0};
+    int                recv_sock  = 0;
+    ssize_t            recv_len   = 0;
+
+    if ((recv_sock = socket(CONN_PROT, CONN_TYPE, 0) < 0)) {
+        fprintf(stderr, "send_domain(): failed to create receiver socket file "
+                        "descriptor\n");
+        return 3;
+    }
+
+    addr.sin_family      = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port        = htons(( int )COMS_PORT);
+
+    DEBUG("Local IP Address: %s:%d\n", inet_ntoa(addr.sin_addr),
+          ( int )ntohs(addr.sin_port));
+
+    if (bind(recv_sock, ( struct sockaddr * )&local_addr, sizeof(local_addr)) <
+        0) {
+        fprintf(stderr,
+                "send_domain(): failed to bind socket to address:port\n");
+        return 4;
+    }
+
+    if (listen(recv_sock, 1) < 0) {
+        fprintf(stderr, "send_domain(): failed to listen on socket\n");
+        return 5;
+    }
+
+    if (fcntl(recv_sock, F_SETFL, O_NONBLOCK) != 0) {
+        fprintf(stderr, "send_domain(): failed to set receiving socket file "
+                        "descriptor as non-blocking\n");
+        return 6;
+    }
+
+    char buf[sizeof(header_n) + 16] = {0};
+    memcpy(buf, &NDJIN_DOMAIN_EXCHANGE, sizeof(header_n));
+    get_external_ip(buf + sizeof(header_n));
+
+    recv_len                        = 0;
+    char data[sizeof(unsigned int)] = {0};
+
+    while (1) {
+        if ((rc = send(send_sock, ( char * )buf, 16, 0)) < 0) {
+            fprintf(stderr, "send_domain(): failed to send domain\n");
+            continue;
+        }
+
+        if ((recv_len = recv(recv_sock, data, sizeof(buf), 0)) < 0) {
+            if (errno == ENOTCONN || errno == ECONNREFUSED) {
+                pthread_cancel((( struct p2p )connection).receiving_thread_pid);
+                disconnect((( struct p2p * )&connection));
+            }
+        }
+        DEBUG("Received: %ld bytes from connected peer\n", recv_len);
+
+        if (recv_len < sizeof(header_n)) {
+            fprintf(stderr, "send_domain(): incorrectly formatted "
+                            "domain received");
+            continue;
+        }
+
+        if ((NDJIN_DOMAIN_EXCHANGE & 0xFFFFFFFF) != (( unsigned int )*buf)) {
+            fprintf(stderr, "listen_for_domain(): incorrect header data\n");
+            continue;
+        }
+
+        if (((NDJIN_DOMAIN_EXCHANGE >> 32) & 0x0000FFFF) != MAGIC_NUMBER) {
+            fprintf(stderr,
+                    "listen_for_domain(): incorrect header magic number\n");
+            continue;
+        }
+
+        if (((NDJIN_DOMAIN_EXCHANGE >> 48) & 0xF0) != 0x00000005) {
+            fprintf(stderr, "listen_for_domain(): incorrect header status\n");
+            continue;
+        }
+
+        if (((NDJIN_DOMAIN_EXCHANGE >> 48) & 0x0F) != VERSION) {
+            fprintf(stderr,
+                    "listen_for_domain(): incorrect protocol version\n");
+            continue;
+        }
+
+        close(recv_sock);
+        break;
+    }
+
+    close(recv_sock);
+    return 0;
+}
+
+int establish(in_addr_t domain)
 {
     struct sockaddr_in addr      = {0};
     struct sockaddr_in peer_addr = {0};
@@ -201,7 +443,7 @@ int establish(in_addr_t domain, int port)
 
     peer_addr.sin_family      = AF_INET;
     peer_addr.sin_addr.s_addr = domain;
-    peer_addr.sin_port        = htons(port);
+    peer_addr.sin_port        = htons(PORT);
 
     if (connect(send_sock, ( struct sockaddr * )&peer_addr, sizeof(peer_addr)) <
         0) {
@@ -210,7 +452,7 @@ int establish(in_addr_t domain, int port)
     }
 
     connection.send_address = &peer_addr;
-    connection.send_port    = port;
+    connection.send_port    = PORT;
     connection.send_socket  = send_sock;
     connection.connected    = 1;
     if (fcntl(send_sock, F_SETFL, O_NONBLOCK) != 0) {
@@ -257,7 +499,7 @@ void *receiving_thread(void *connection)
         recv_len      = 0;
         char buf[256] = {0};
 
-        if ((recv_len = recv(recv_len, buf, sizeof(buf), 0)) < 0) {
+        if ((recv_len = recv(recv_fd, buf, sizeof(buf), 0)) < 0) {
             if (errno == ENOTCONN || errno == ECONNREFUSED) {
                 pthread_cancel(
                         (( struct p2p * )connection)->receiving_thread_pid);

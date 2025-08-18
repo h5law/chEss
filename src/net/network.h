@@ -36,17 +36,19 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
-#define PORT         54355
+#define PORT            54355
+#define COMS_PORT       55345
 
-#define CONN_PROT    AF_INET
-#define CONN_TYPE    SOCK_STREAM
-#define CONN_ADDR    INADDR_ANY
+#define CONN_PROT       AF_INET
+#define CONN_TYPE       SOCK_STREAM
+#define CONN_ADDR       INADDR_ANY
 
-#define VERSION      0x00000001
-#define MAGIC_NUMBER 0x00005157
+#define VERSION         0x00000001
+#define MAGIC_NUMBER    0x00005157
 
-#define PING_NUMBER  0xDEADBEEF
-#define PONG_NUMBER  0xBEEFBABE
+#define DOMAIN_EXCHANGE 0xD0D05050
+#define PING_NUMBER     0xDEADBEEF
+#define PONG_NUMBER     0xBEEFBABE
 
 #ifndef PING_INTERVAL
 #define PING_INTERVAL 30
@@ -159,9 +161,11 @@ game_msg_n pop_from_stack(gms_t *stack);
                           (( header_n )0x0000 << 16),                          \
                   MAGIC_NUMBER, HANDSHAKE_STEP_ONE, VERSION)
 
+int  listen_for_domain(char domain[16]);
+int  send_domain(char domain[16]);
 void get_external_ip(char buf[16]);
 
-int establish(in_addr_t domain, int port);
+int establish(in_addr_t domain);
 
 void *receiving_thread(void *connection);
 

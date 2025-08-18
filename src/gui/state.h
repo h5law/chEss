@@ -34,7 +34,7 @@
 #include <netinet/in.h>
 
 struct game_t {
-    in_addr_t code      : 15;
+    char code[16];
 
     /* 0 1 - player 1 white
      * 1 0 - player 2 white

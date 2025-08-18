@@ -35,11 +35,11 @@ void title_box(const char *text, int xoff);
 int  draw_tb_buttons(const char *top, const char *bottom);
 int  splash_screen(void);
 
-void show_game_code(void);
+void show_game_code(char code[16]);
 int  new_game_screen(void);
 
 int  join_game_screen(void);
-void game_code_entry(char buf[13]);
+void game_code_entry(char buf[16]);
 
 #endif /* PRE_H */
 
